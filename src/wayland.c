@@ -9,7 +9,6 @@
 #include <sys/mman.h>
 #include <syscall.h>
 #include <unistd.h>
-#include <wayland-client-core.h>
 #include <wayland-client.h>
 
 static struct wl_registry_listener registry_listener = {
@@ -24,6 +23,7 @@ static const struct xdg_surface_listener xdg_surface_listener = {
 static const struct xdg_toplevel_listener xdg_toplevel_listener = {
     .configure = xdg_toplevel_configure_handler,
     .close = xdg_toplevel_close_handler,
+    .wm_capabilities = xdg_toplevel_capabilities_handler,
 };
 
 // attach above listeners to the registry
@@ -67,12 +67,11 @@ void make_surfaces(wlc_t *wlc) {
   wlc->surface = wl_compositor_create_surface(wlc->compositor);
   wlc->xdg_surface =
       xdg_wm_base_get_xdg_surface(wlc->xdg_wm_base, wlc->surface);
-  wlc->xdg_toplevel = xdg_surface_get_toplevel(wlc->xdg_surface);
-
-  INFO("toplevel listener");
-  xdg_toplevel_add_listener(wlc->xdg_toplevel, &xdg_toplevel_listener, wlc);
-  INFO("surface listener");
   xdg_surface_add_listener(wlc->xdg_surface, &xdg_surface_listener, wlc);
+
+  wlc->xdg_toplevel = xdg_surface_get_toplevel(wlc->xdg_surface);
+  xdg_toplevel_set_title(wlc->xdg_toplevel, "bruh");
+  xdg_toplevel_add_listener(wlc->xdg_toplevel, &xdg_toplevel_listener, wlc);
 }
 
 void init_buffer(wlc_t *wlc) {

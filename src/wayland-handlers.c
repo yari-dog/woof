@@ -2,6 +2,7 @@
 #include "util.h"
 #include "wayland.h"
 #include <wayland-client.h>
+#include <wayland-util.h>
 #define COLORDEPTHSLUDGE 4
 void xdg_toplevel_configure_handler(void *userdata,
                                     struct xdg_toplevel *xdg_toplevel,
@@ -14,6 +15,12 @@ void xdg_toplevel_close_handler(void *userdata,
                                 struct xdg_toplevel *xdg_toplevel) {
   IN_MESSAGE("xdg_toplevel_close :3");
 };
+
+void xdg_toplevel_capabilities_handler(void *userdata,
+                                       struct xdg_toplevel *xdg_toplevel,
+                                       struct wl_array *capabilities) {
+  IN_MESSAGE("xdg_toplevel_capabilities :3");
+}
 
 void xdg_surface_configure_handler(void *userdata,
                                    struct xdg_surface *xdg_surface,

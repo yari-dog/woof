@@ -14,6 +14,9 @@ void xdg_toplevel_close_handler(void *userdata,
 void xdg_surface_configure_handler(void *userdata,
                                    struct xdg_surface *xdg_surface,
                                    uint32_t serial);
+void xdg_toplevel_capabilities_handler(void *userdata,
+                                       struct xdg_toplevel *xdg_toplevel,
+                                       struct wl_array *capabilities);
 void wl_registry_global_handler(void *userdata, struct wl_registry *registry,
                                 uint32_t name, const char *interface,
                                 uint32_t version);
