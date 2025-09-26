@@ -22,6 +22,7 @@ struct wlc_t {
   int y;
   int stride; // how many bytes is there in a line
   bool configured;
+  char *title;
 };
 
 void wlc_init(wlc_t *wlc);

@@ -8,6 +8,7 @@ void woof_init(woof_t *woof) {
 
   // create wayland stuff
   wlc_t wlc;
+  wlc.title = ":woof";
   woof->wlc = &wlc;
   wlc_init(woof->wlc);
 }

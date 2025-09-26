@@ -70,7 +70,7 @@ void make_surfaces(wlc_t *wlc) {
   xdg_surface_add_listener(wlc->xdg_surface, &xdg_surface_listener, wlc);
 
   wlc->xdg_toplevel = xdg_surface_get_toplevel(wlc->xdg_surface);
-  xdg_toplevel_set_title(wlc->xdg_toplevel, "bruh");
+  xdg_toplevel_set_title(wlc->xdg_toplevel, wlc->title);
   xdg_toplevel_add_listener(wlc->xdg_toplevel, &xdg_toplevel_listener, wlc);
 }
 
