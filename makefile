@@ -4,7 +4,7 @@ dir:
 	mkdir -p build
 
 main: dir src/main.c
-	gcc -o build/main $(SRC)
+	gcc -o build/main $(SRC) -l wayland-client
 
 run: main
 	build/main
