@@ -1,46 +1,29 @@
 #include "wayland.h"
 #include "../include/xdg-shell.h"
 #include "util.h"
+#include "wayland-handlers.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <syscall.h>
 #include <unistd.h>
+#include <wayland-client-core.h>
 #include <wayland-client.h>
 
-#define COLORDEPTHSLUDGE 4
+static struct wl_registry_listener registry_listener = {
+    .global = wl_registry_global_handler,
+    .global_remove = wl_registry_global_remove_handler,
+};
 
-// handle global messages
-void registry_global_handler(void *userdata, struct wl_registry *registry,
-                             uint32_t name, const char *interface,
-                             uint32_t version) {
+static const struct xdg_surface_listener xdg_surface_listener = {
+    .configure = xdg_surface_configure_handler,
+};
 
-  IN_MESSAGE("interface: %s, version: %u, name: %u", interface, version, name);
-  // cast mysterious userdata to what it needs to be :3
-  wlc_t *wlc = (struct wlc_t *)userdata;
-
-  if (strcmp(interface, "wl_compositor") == 0) {
-    INFO("%s connected", interface);
-    wlc->compositor =
-        wl_registry_bind(registry, name, &wl_compositor_interface, version);
-  } else if (strcmp(interface, "wl_shm") == 0) {
-    INFO("%s connected", interface);
-    wlc->shm = wl_registry_bind(registry, name, &wl_shm_interface, version);
-  } else if (strcmp(interface, "xdg_wm_base") == 0) {
-    INFO("%s connected", interface);
-    wlc->xdg_wm_base =
-        wl_registry_bind(wlc->registry, name, &xdg_wm_base_interface, version);
-  }
-}
-void registry_global_remove_handler(void *data, struct wl_registry *registry,
-                                    uint32_t name) {
-  IN_MESSAGE("remove name: %u", name);
-}
-
-const struct wl_registry_listener registry_listener = {
-    .global = registry_global_handler,
-    .global_remove = registry_global_remove_handler,
+static const struct xdg_toplevel_listener xdg_toplevel_listener = {
+    .configure = xdg_toplevel_configure_handler,
+    .close = xdg_toplevel_close_handler,
 };
 
 // attach above listeners to the registry
@@ -51,53 +34,6 @@ void registry_init(wlc_t *wlc) {
 
   // block us till queue dropped
   wl_display_roundtrip(wlc->display);
-}
-
-void resize_handler(wlc_t *wlc, uint32_t x, uint32_t y) {
-  wlc->x = x;
-  wlc->y = y;
-  wlc->stride = wlc->x * COLORDEPTHSLUDGE; // TODO: change from hardcoded sludge
-}
-
-// i cba to code this tbh
-static void randname(char *buf) {
-  struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  long r = ts.tv_nsec;
-  for (int i = 0; i < 6; ++i) {
-    buf[i] = 'A' + (r & 15) + (r & 16) * 2;
-    r >>= 5;
-  }
-}
-
-// create and open the shared memory
-int open_shm_file() {
-  char name[] = "/woof-wayland-xxxxxx";
-  for (int i = 100; i >= 0; i--) {
-    randname(name + strlen(name) - 6);
-    INFO("shm name:%s", name);
-    int fd = shm_open(name, O_RDWR | O_CREAT | O_EXCL, 0600);
-    if (fd >= 0) {
-      shm_unlink(name);
-      return fd;
-    }
-  }
-  return -1;
-}
-
-int create_shm_file(int size) {
-  INFO("making shm file");
-  int fd = open_shm_file();
-  if (fd < 0)
-    return fd;
-
-  if (ftruncate(fd, size) < 0) {
-    close(fd);
-    EXIT("fucked up creating the buffer :\\ sowwy");
-  }
-
-  INFO("shm made :3");
-  return fd;
 }
 
 void build_buffer(wlc_t *wlc) {
@@ -126,18 +62,33 @@ void build_buffer(wlc_t *wlc) {
   INFO("closed");
 }
 
-void init_buffer(wlc_t *wlc) {
-  INFO("wlc_init_buffer");
+void make_surfaces(wlc_t *wlc) {
+  INFO("making surfaces");
   wlc->surface = wl_compositor_create_surface(wlc->compositor);
   wlc->xdg_surface =
       xdg_wm_base_get_xdg_surface(wlc->xdg_wm_base, wlc->surface);
   wlc->xdg_toplevel = xdg_surface_get_toplevel(wlc->xdg_surface);
 
+  INFO("toplevel listener");
+  xdg_toplevel_add_listener(wlc->xdg_toplevel, &xdg_toplevel_listener, wlc);
+  INFO("surface listener");
+  xdg_surface_add_listener(wlc->xdg_surface, &xdg_surface_listener, wlc);
+}
+
+void init_buffer(wlc_t *wlc) {
+  INFO("wlc_init_buffer");
+
+  make_surfaces(wlc);
+  INFO("surface commit");
   wl_surface_commit(wlc->surface);
+  while (wl_display_dispatch(wlc->display) != -1 && !wlc->configured) {
+    // blank on purpose
+  }
 
   build_buffer(wlc);
 
   wl_surface_attach(wlc->surface, wlc->buffer, wlc->x, wlc->y);
+  wl_surface_commit(wlc->surface);
   INFO("attached");
 }
 
