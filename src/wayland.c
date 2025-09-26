@@ -3,13 +3,10 @@
 #include "util.h"
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <syscall.h>
 #include <unistd.h>
-#include <wayland-client-core.h>
-#include <wayland-client-protocol.h>
 #include <wayland-client.h>
 
 #define COLORDEPTHSLUDGE 4
@@ -151,7 +148,7 @@ void wlc_init(wlc_t *wlc) {
   INFO("wlc_init");
 
   INFO("setting wlc params");
-  resize_handler(wlc, wlc->x, wlc->y);
+  resize_handler(wlc, 100, 100);
 
   // connect display
   wlc->display = wl_display_connect(NULL);
