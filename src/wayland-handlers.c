@@ -4,6 +4,8 @@
 #include <wayland-client.h>
 #include <wayland-util.h>
 #define COLORDEPTHSLUDGE 4
+
+// just speedrun setting up listeners idgaf
 void xdg_toplevel_configure_handler(void *userdata,
                                     struct xdg_toplevel *xdg_toplevel,
                                     int32_t width, int32_t height,
