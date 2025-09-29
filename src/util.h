@@ -23,35 +23,31 @@ int create_shm_file(int size);
 #define NEWLINE "\n"
 
 static inline char *timenow() {
-  static char buffer[64];
-  time_t rawtime;
-  struct tm *timeinfo;
+    static char buffer[64];
+    time_t rawtime;
+    struct tm *timeinfo;
 
-  time(&rawtime);
-  timeinfo = localtime(&rawtime);
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
 
-  strftime(buffer, 64, "%H:%M:%S", timeinfo);
+    strftime(buffer, 64, "%H:%M:%S", timeinfo);
 
-  return buffer;
+    return buffer;
 }
 
-#define INFO(message, args...)                                                 \
-  PRINTFUNCTION(LOG_FMT(ANSI_COLOR_YELLOW) message ANSI_COLOR_RESET NEWLINE,   \
-                LOG_ARGS("INFO:"), ##args)
+#define INFO(message, args...)                                                                                         \
+    PRINTFUNCTION(LOG_FMT(ANSI_COLOR_YELLOW) message ANSI_COLOR_RESET NEWLINE, LOG_ARGS("INFO:"), ##args)
 
-#define EXIT(message, args...)                                                 \
-  {                                                                            \
-    PRINTFUNCTION(LOG_FMT(ANSI_COLOR_RED) message ANSI_COLOR_RESET NEWLINE,    \
-                  LOG_ARGS("ERROR:"), ##args);                                 \
-    exit(errno);                                                               \
-  }
+#define EXIT(message, args...)                                                                                         \
+    {                                                                                                                  \
+        PRINTFUNCTION(LOG_FMT(ANSI_COLOR_RED) message ANSI_COLOR_RESET NEWLINE, LOG_ARGS("ERROR:"), ##args);           \
+        exit(errno);                                                                                                   \
+    }
 
-#define OUT_MESSAGE(message, args...)                                          \
-  PRINTFUNCTION(LOG_FMT(ANSI_COLOR_CYAN) message ANSI_COLOR_RESET NEWLINE,     \
-                LOG_ARGS("->"), ##args)
+#define OUT_MESSAGE(message, args...)                                                                                  \
+    PRINTFUNCTION(LOG_FMT(ANSI_COLOR_CYAN) message ANSI_COLOR_RESET NEWLINE, LOG_ARGS("->"), ##args)
 
-#define IN_MESSAGE(message, args...)                                           \
-  PRINTFUNCTION(LOG_FMT(ANSI_COLOR_CYAN) message ANSI_COLOR_RESET NEWLINE,     \
-                LOG_ARGS("<-"), ##args)
+#define IN_MESSAGE(message, args...)                                                                                   \
+    PRINTFUNCTION(LOG_FMT(ANSI_COLOR_CYAN) message ANSI_COLOR_RESET NEWLINE, LOG_ARGS("<-"), ##args)
 
 #endif
