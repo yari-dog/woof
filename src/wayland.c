@@ -4,18 +4,20 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <syscall.h>
 #include <unistd.h>
-#include <wayland-client-protocol.h>
 #include <wayland-client.h>
 #define COLORDEPTHSLUDGE 4
 
 static const struct wl_registry_listener registry_listener;
 static const struct xdg_surface_listener xdg_surface_listener;
 static const struct xdg_toplevel_listener xdg_toplevel_listener;
+
+void set_title(wlc_t *wlc, char *title, int size);
 
 void draw_frame(wlc_t *wlc) {
   INFO("drawing frame :3");
@@ -74,6 +76,7 @@ void set_size(wlc_t *wlc, uint32_t width, uint32_t height) {
 
 void resize_handler(wlc_t *wlc, uint32_t width, uint32_t height) {
   INFO("rezising :3");
+  // double check there's a buffer to unmap lmao
   if (wlc->buffer_data) {
     INFO("unmapping buffer");
     munmap(wlc->buffer_data, wlc->height * wlc->stride);
@@ -159,6 +162,8 @@ void wl_registry_global_remove_handler(void *data, struct wl_registry *registry,
                                        uint32_t name) {
   IN_MESSAGE("remove name: %u", name);
 }
+
+// ts jus assigning listeners
 static const struct wl_registry_listener registry_listener = {
     .global = wl_registry_global_handler,
     .global_remove = wl_registry_global_remove_handler,
@@ -204,15 +209,31 @@ void wlc_disconnect(wlc_t *wlc) {
   wl_display_disconnect(wlc->display);
 }
 
-void set_title(wlc_t *wlc, char *title) { wlc->title = title; }
+void set_title(wlc_t *wlc, char *title, int size) {
+  // example for setting title dynamically
+  // int length = snprintf(NULL, 0, "%s (%ix%i)", wlc->title, width, height);
+  // char *title = malloc(length + 1);
+  // snprintf(title, length + 1, "%s (%ix%i)", wlc->title, width, height);
+  // printf("title = %s\n", title);
+  // set_title(wlc, title, length);
+  // free(title);
+  if (wlc->title)
+    free(wlc->title);
+  char *title_buf = malloc(size);
+  strcpy(title_buf, title);
+  wlc->title = title_buf;
+}
 
 wlc_t *wlc_init() {
   // assign memory and initialise it to 0 for swag purposes
   wlc_t *wlc = malloc(sizeof(wlc_t));
   memset(wlc, 0, sizeof(wlc_t));
 
+  char *default_title = ":woof";
+
   // set values etc
-  set_title(wlc, ":woof");
+  set_title(wlc, default_title, sizeof(default_title + 1));
+  INFO("default titled");
   set_size(wlc, 100, 100);
   return wlc;
 }
