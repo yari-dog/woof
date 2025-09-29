@@ -211,9 +211,10 @@ void wlc_disconnect(wlc_t *wlc) {
 
 void set_title(wlc_t *wlc, char *title, int size) {
   // example for setting title dynamically
-  // int length = snprintf(NULL, 0, "%s (%ix%i)", wlc->title, width, height);
+  // char *current_title = wlc->title;
+  // int length = snprintf(NULL, 0, "%s (%ix%i)", current_title, width, height);
   // char *title = malloc(length + 1);
-  // snprintf(title, length + 1, "%s (%ix%i)", wlc->title, width, height);
+  // snprintf(title, length + 1, "%s (%ix%i)", current_title, width, height);
   // printf("title = %s\n", title);
   // set_title(wlc, title, length);
   // free(title);
@@ -229,12 +230,11 @@ wlc_t *wlc_init() {
   wlc_t *wlc = malloc(sizeof(wlc_t));
   memset(wlc, 0, sizeof(wlc_t));
 
-  char *default_title = ":woof";
-
   // set values etc
+  char *default_title = ":woof";
   set_title(wlc, default_title, sizeof(default_title + 1));
-  INFO("default titled");
   set_size(wlc, 100, 100);
+
   return wlc;
 }
 
