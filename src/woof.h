@@ -3,12 +3,11 @@
 #include "wayland.h"
 #include <wayland-client.h>
 
-typedef struct woof_t woof_t;
-
-struct woof_t {
+typedef struct woof_t {
   struct wlc_t *wlc;
-};
+} woof_t;
 
-void woof_init(woof_t *woof);
+woof_t *init_woof();
+void destroy_woof(woof_t *woof);
 
 #endif

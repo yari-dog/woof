@@ -7,6 +7,7 @@
 #include <time.h>
 #include <unistd.h>
 
+// gen random name for the shm file, incase collision somehow happens
 static void randname(char *buf) {
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
@@ -32,6 +33,7 @@ int open_shm_file() {
   return -1;
 }
 
+// wrapper for open_shm_file stuff
 int create_shm_file(int size) {
   INFO("making shm file");
   int fd = open_shm_file();

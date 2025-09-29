@@ -1,14 +1,14 @@
 #include "woof.h"
+#include "util.h"
 #include "wayland.h"
-#include <stdio.h>
 #include <wayland-client.h>
 
-void woof_init(woof_t *woof) {
-  printf("(INFO) woof_init\n");
-
-  // create wayland stuff
-  wlc_t wlc;
-  wlc.title = ":woof";
-  woof->wlc = &wlc;
-  wlc_init(woof->wlc);
+woof_t *init_woof() {
+  INFO("woof initiating :o");
+  woof_t *woof = malloc(sizeof(woof_t));
+  woof->wlc = wlc_init();
+  INFO("woof initiated :3");
+  return woof;
 }
+
+void destroy_woof(woof_t *woof) { free(woof); }

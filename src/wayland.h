@@ -4,10 +4,9 @@
 #include "../include/xdg-shell.h"
 #include <stdbool.h>
 #include <stdint.h>
-typedef struct wlc_t wlc_t;
 
 // hold data for wayland shit
-struct wlc_t {
+typedef struct wlc_t {
   struct wl_display *display;
   struct wl_surface *surface;
   struct wl_registry *registry;
@@ -15,17 +14,23 @@ struct wlc_t {
   struct wl_shm_pool *shm_pool;
   struct wl_compositor *compositor;
   struct wl_buffer *buffer;
+  uint32_t *buffer_data;
   struct xdg_wm_base *xdg_wm_base;
   struct xdg_surface *xdg_surface;
   struct xdg_toplevel *xdg_toplevel;
-  int x;
-  int y;
-  int stride; // how many bytes is there in a line
+  int32_t x; // window x pos
+  int32_t y; // window y pos
+  uint32_t width;
+  uint32_t height;
+  uint32_t stride; // how many bytes is there in a line
   bool configured;
+  bool resizing;
+  bool close;
   char *title;
-};
+} wlc_t;
 
-void wlc_init(wlc_t *wlc);
+wlc_t *wlc_init();
+void wlc_start(wlc_t *wlc);
 
 void wlc_disconnect(wlc_t *wlc);
 #endif

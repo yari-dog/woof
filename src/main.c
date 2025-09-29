@@ -1,13 +1,23 @@
+#include "util.h"
 #include "wayland.h"
 #include "woof.h"
+#include <wayland-client-core.h>
 #include <wayland-client.h>
 
 int main() {
-  woof_t woof;
-  woof_init(&woof);
+  woof_t *woof = init_woof();
 
-  while (1)
-    wl_display_dispatch(woof.wlc->display);
+  wlc_start(woof->wlc);
+  INFO("close %s? %u", woof->wlc->title, woof->wlc->close);
 
-  wlc_disconnect(woof.wlc);
+  // main loop. entry etc etc etc
+  while (!woof->wlc->close) {
+    INFO("heartbeat %s", woof->wlc->title);
+    if (!wl_display_dispatch_pending(woof->wlc->display)) {
+      wl_display_dispatch(woof->wlc->display);
+    }
+  }
+
+  // function that handles shutting down gracefully
+  wlc_disconnect(woof->wlc);
 }
