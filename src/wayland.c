@@ -1,7 +1,6 @@
 #include "wayland.h"
 #include "../include/xdg-shell.h"
 #include "util.h"
-#include "wayland-handlers.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
