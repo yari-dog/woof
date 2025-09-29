@@ -11,7 +11,6 @@ int main() {
 
   // main loop. entry etc etc etc
   while (!woof->wlc->close) {
-    INFO("heartbeat %s", woof->wlc->title);
     if (!wl_display_dispatch_pending(woof->wlc->display)) {
       wl_display_dispatch(woof->wlc->display);
     }

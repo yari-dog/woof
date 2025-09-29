@@ -4,7 +4,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -46,21 +45,16 @@ void init_buffer(wlc_t *wlc) {
       mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (wlc->buffer_data == MAP_FAILED)
     EXIT("fucked up mapping the shmm :\\ sowwy");
-  INFO("mmaped");
 
   wlc->shm_pool =
       wl_shm_create_pool(wlc->shm, fd,
                          size); // TODO: is this a race condition waiting to
                                 // happen with the above line
-  INFO("pooled");
   wlc->buffer =
       wl_shm_pool_create_buffer(wlc->shm_pool, 0, wlc->width, wlc->height,
                                 wlc->stride, WL_SHM_FORMAT_XRGB8888);
-  INFO("buffered");
   wl_shm_pool_destroy(wlc->shm_pool);
-  INFO("destroyed");
   close(fd);
-  INFO("closed");
 
   INFO("%s buffed size: %ux%u", wlc->title, wlc->width, wlc->height);
 }
@@ -75,7 +69,7 @@ void set_size(wlc_t *wlc, uint32_t width, uint32_t height) {
 }
 
 void resize_handler(wlc_t *wlc, uint32_t width, uint32_t height) {
-  INFO("rezising :3");
+  INFO("resizing :3");
   // double check there's a buffer to unmap lmao
   if (wlc->buffer_data) {
     INFO("unmapping buffer");
@@ -92,7 +86,6 @@ void xdg_toplevel_configure_handler(void *userdata,
                                     struct wl_array *states) {
   IN_MESSAGE("xdg_toplevel_config: %dx%d", width, height);
   wlc_t *wlc = (struct wlc_t *)userdata;
-  INFO("%s current size: %ux%u", wlc->title, wlc->width, wlc->height);
   if (wlc->width != width || wlc->height != height) {
     resize_handler(wlc, width, height);
   }
@@ -223,6 +216,7 @@ void set_title(wlc_t *wlc, char *title, int size) {
   char *title_buf = malloc(size);
   strcpy(title_buf, title);
   wlc->title = title_buf;
+  INFO("title set: %s", wlc->title);
 }
 
 wlc_t *wlc_init() {
