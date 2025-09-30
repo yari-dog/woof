@@ -1,50 +1,8 @@
+#include "../../include/wlr-layer-shell.h"
 #include "../util.h"
 #include "wayland.h"
-
-// static const struct wl_registry_listener registry_listener;
-// static const struct xdg_surface_listener xdg_surface_listener;
-// static const struct xdg_toplevel_listener xdg_toplevel_listener;
-
-void xdg_toplevel_configure_handler(void *userdata, struct xdg_toplevel *xdg_toplevel, int32_t width, int32_t height,
-                                    struct wl_array *states) {
-    IN_MESSAGE("xdg_toplevel_config: %dx%d", width, height);
-    wlc_t *wlc = (struct wlc_t *)userdata;
-    if (wlc->width != width || wlc->height != height) {
-        resize_handler(wlc, width, height);
-    }
-};
-
-void xdg_toplevel_close_handler(void *userdata, struct xdg_toplevel *xdg_toplevel) {
-    IN_MESSAGE("xdg_toplevel_close :3");
-    wlc_t *wlc = (struct wlc_t *)userdata;
-    wlc->close = true;
-};
-
-void xdg_toplevel_capabilities_handler(void *userdata, struct xdg_toplevel *xdg_toplevel,
-                                       struct wl_array *capabilities) {
-    IN_MESSAGE("xdg_toplevel_capabilities :3");
-}
-
-void xdg_surface_configure_handler(void *userdata, struct xdg_surface *xdg_surface, uint32_t serial) {
-    xdg_surface_ack_configure(xdg_surface, serial);
-    wlc_t *wlc = (struct wlc_t *)userdata;
-    IN_MESSAGE("%s configured :3, %i, %u", wlc->title, wlc->configured, serial);
-
-    if (!wlc->configured)
-        resize_handler(wlc, wlc->width, wlc->height);
-
-    wl_surface_attach(wlc->surface, wlc->buffer, wlc->width, wlc->height);
-    wl_surface_commit(wlc->surface);
-    wlc->configured = true;
-};
-
-void xdg_wm_base_handle_ping(void *data, struct xdg_wm_base *xdg_wm_base, uint32_t serial) {
-    xdg_wm_base_pong(xdg_wm_base, serial);
-};
-
-const struct xdg_wm_base_listener xdg_wm_base_listener = {
-    .ping = xdg_wm_base_handle_ping,
-};
+#include <wayland-client-protocol.h>
+#define COLORDEPTHSLUDGE 4
 
 // handle global messages
 void wl_registry_global_handler(void *userdata, struct wl_registry *registry, uint32_t name, const char *interface,
@@ -54,18 +12,46 @@ void wl_registry_global_handler(void *userdata, struct wl_registry *registry, ui
     // cast mysterious userdata to what it needs to be :3
     wlc_t *wlc = (struct wlc_t *)userdata;
 
-    if (strcmp(interface, "wl_compositor") == 0) {
-        INFO("%s connected", interface);
+    // true until an else in the below statements,,
+    bool connected = true;
+
+    if (strcmp(interface, "wl_compositor") == 0)
         wlc->compositor = wl_registry_bind(registry, name, &wl_compositor_interface, version);
-    } else if (strcmp(interface, "wl_shm") == 0) {
-        INFO("%s connected", interface);
+    else if (strcmp(interface, "wl_shm") == 0)
         wlc->shm = wl_registry_bind(registry, name, &wl_shm_interface, version);
-    } else if (strcmp(interface, "xdg_wm_base") == 0) {
+    else if (strcmp(interface, "zwlr_layer_shell_v1") == 0)
+        wlc->zwlr_layer_shell = wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, version);
+    // else if (strcmp(interface, "wl_output_interface") == 0)
+    //     wlc->output_interface = wl_registry_bind(registry, name, &wl_output_interface, version);
+    else
+        connected = false;
+
+    if (connected)
         INFO("%s connected", interface);
-        wlc->xdg_wm_base = wl_registry_bind(wlc->registry, name, &xdg_wm_base_interface, version);
-        xdg_wm_base_add_listener(wlc->xdg_wm_base, &xdg_wm_base_listener, wlc);
-    }
 }
+
 void wl_registry_global_remove_handler(void *data, struct wl_registry *registry, uint32_t name) {
     IN_MESSAGE("remove name: %u", name);
+}
+
+void zwlr_layer_surface_config_handler(void *userdata, struct zwlr_layer_surface_v1 *surface, uint32_t serial,
+                                       uint32_t width, uint32_t height) {
+    IN_MESSAGE("zwlr_layer_surface_configure: s(%i) %ix%i", serial, width, height);
+    zwlr_layer_surface_v1_ack_configure(surface, serial);
+    return;
+    wlc_t *wlc = (struct wlc_t *)userdata;
+    if (!wlc->configured || (width != wlc->width || height != wlc->height)) {
+        resize_handler(wlc, width, height);
+        // wlc->width = width;
+        // wlc->height = height;
+        // wlc->stride = wlc->width * COLORDEPTHSLUDGE;
+    }
+
+    wlc->configured = true;
+}
+
+void zwlr_layer_surface_close_handler(void *userdata, struct zwlr_layer_surface_v1 *surface) {
+    IN_MESSAGE("zwlr_layer_surface_close :3");
+    wlc_t *wlc = (struct wlc_t *)userdata;
+    wlc->close = true;
 }

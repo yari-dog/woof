@@ -9,10 +9,13 @@ int main() {
     wlc_start(woof->wlc);
     INFO("close %s? %u", woof->wlc->title, woof->wlc->close);
 
+    bool redraw = true;
+
     // main loop. entry etc etc etc
     while (!woof->wlc->close) {
-        if (!wl_display_dispatch_pending(woof->wlc->display)) {
-            wl_display_dispatch(woof->wlc->display);
+        if (redraw) {
+            draw_frame(woof->wlc);
+            redraw = false;
         }
     }
 

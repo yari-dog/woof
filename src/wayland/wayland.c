@@ -1,5 +1,5 @@
 #include "wayland.h"
-#include "../../include/xdg-shell.h"
+#include "../../include/wlr-layer-shell.h"
 #include "../util.h"
 #include "wayland-listeners.h"
 #include <errno.h>
@@ -10,24 +10,19 @@
 #include <sys/mman.h>
 #include <syscall.h>
 #include <unistd.h>
+#include <wayland-client-core.h>
+#include <wayland-client-protocol.h>
 #include <wayland-client.h>
 #define COLORDEPTHSLUDGE 4
+#define BUFFER_SCALE 4
 
 void set_title(wlc_t *wlc, char *title, int size);
 
-void draw_frame(wlc_t *wlc) {
-    INFO("drawing frame :3");
-    // print checkerboard
-    uint32_t bg = 0xFF282828;
-    uint32_t color = 0xFFEBDBB2;
-    for (int i = 0; i < wlc->height; ++i) {
-        for (int j = 0; j < wlc->width; ++j) {
-            if ((i + j / 8 * 8) % 16 < 8)
-                wlc->buffer_data[i * wlc->width + j] = color;
-            else
-                wlc->buffer_data[i * wlc->width + j] = bg;
-        }
-    }
+void render(wlc_t *wlc) {
+    wl_surface_set_buffer_scale(wlc->surface, 1);
+    wl_surface_attach(wlc->surface, wlc->buffer, wlc->width, wlc->height);
+    wl_surface_damage_buffer(wlc->surface, 0, 0, wlc->width, wlc->height);
+    wl_surface_commit(wlc->surface);
 }
 
 void init_buffer(wlc_t *wlc) {
@@ -53,10 +48,38 @@ void init_buffer(wlc_t *wlc) {
     INFO("%s buffed size: %ux%u", wlc->title, wlc->width, wlc->height);
 }
 
+void wipe_buffer(wlc_t *wlc) {
+    if (wlc->buffer_data) {
+        INFO("unmapping buffer");
+        munmap(wlc->buffer_data, wlc->height * wlc->stride);
+    }
+}
+
+void draw_frame(wlc_t *wlc) {
+    wipe_buffer(wlc);
+    init_buffer(wlc);
+    INFO("drawing frame :3");
+    // print checkerboard
+    uint32_t bg = 0xFF282828;
+    uint32_t color = 0xFFEBDBB2;
+    for (int i = 0; i < wlc->height; ++i) {
+        for (int j = 0; j < wlc->width; ++j) {
+            if ((i + j / 8 * 8) % 16 < 8)
+                wlc->buffer_data[i * wlc->width + j] = color;
+            else
+                wlc->buffer_data[i * wlc->width + j] = bg;
+        }
+    }
+    render(wlc);
+    INFO("drawn :o");
+}
+
 void set_size(wlc_t *wlc, uint32_t width, uint32_t height) {
     wlc->width = width;
     wlc->height = height;
     wlc->stride = wlc->width * COLORDEPTHSLUDGE; // TODO: change from hardcoded sludge
+    if (wlc->zwlr_layer_surface)
+        zwlr_layer_surface_v1_set_size(wlc->zwlr_layer_surface, wlc->width, wlc->height);
 
     INFO("%s resized size: %ux%u", wlc->title, wlc->width, wlc->height);
 }
@@ -64,18 +87,12 @@ void set_size(wlc_t *wlc, uint32_t width, uint32_t height) {
 void resize_handler(wlc_t *wlc, uint32_t width, uint32_t height) {
     INFO("resizing :3");
     // double check there's a buffer to unmap lmao
-    if (wlc->buffer_data) {
-        INFO("unmapping buffer");
-        munmap(wlc->buffer_data, wlc->height * wlc->stride);
-    }
+    wipe_buffer(wlc);
     set_size(wlc, width, height);
     init_buffer(wlc);
     draw_frame(wlc);
 }
 
-// just speedrun setting up listeners idgaf
-
-// attach above listeners to the registry
 void registry_init(wlc_t *wlc) {
 
     wlc->registry = wl_display_get_registry(wlc->display);
@@ -88,12 +105,24 @@ void registry_init(wlc_t *wlc) {
 void make_surfaces(wlc_t *wlc) {
     INFO("making surfaces");
     wlc->surface = wl_compositor_create_surface(wlc->compositor);
-    wlc->xdg_surface = xdg_wm_base_get_xdg_surface(wlc->xdg_wm_base, wlc->surface);
-    xdg_surface_add_listener(wlc->xdg_surface, &xdg_surface_listener, wlc);
 
-    wlc->xdg_toplevel = xdg_surface_get_toplevel(wlc->xdg_surface);
-    xdg_toplevel_set_title(wlc->xdg_toplevel, wlc->title);
-    xdg_toplevel_add_listener(wlc->xdg_toplevel, &xdg_toplevel_listener, wlc);
+    // wlr-layer-shell-unstable-v1
+    wlc->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(wlc->zwlr_layer_shell, wlc->surface, wlc->output,
+                                                                    ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->title);
+
+    zwlr_layer_surface_v1_set_anchor(wlc->zwlr_layer_surface,
+                                     ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT || ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+    // zwlr_layer_surface_v1_set_exclusive_zone(wlc->zwlr_layer_surface, -1);
+    zwlr_layer_surface_v1_set_keyboard_interactivity(wlc->zwlr_layer_surface,
+                                                     ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE);
+    // zwlr_layer_surface_v1_set_margin(wlc->zwlr_layer_surface, 500, 500, 500, 500);
+
+    zwlr_layer_surface_v1_add_listener(wlc->zwlr_layer_surface, &zwlr_layer_surface_listener, wlc);
+
+    set_size(wlc, 800, 800);
+
+    INFO("surface commit");
+    wl_surface_commit(wlc->surface);
 }
 
 // just abstraction idk cleaner in my brain
@@ -127,7 +156,7 @@ wlc_t *wlc_init() {
     // set values etc
     char *default_title = ":woof";
     set_title(wlc, default_title, sizeof(default_title + 1));
-    set_size(wlc, 100, 100);
+    wlc->output = NULL;
 
     return wlc;
 }
@@ -144,17 +173,18 @@ void wlc_start(wlc_t *wlc) {
     registry_init(wlc);
 
     // die if no <thing>
-    if (!wlc->compositor || !wlc->shm || !wlc->xdg_wm_base)
-        EXIT("MISSING wl_compositor (%i) || wl_shm (%i) || xdg_wm_base (%i)", !!wlc->compositor, !!wlc->shm,
-             !!wlc->xdg_wm_base);
+    if (!wlc->compositor || !wlc->shm || !wlc->zwlr_layer_shell)
+        EXIT("MISSING wl_compositor (%i) || wl_shm (%i) || zwlr_layer_shell (%i)", !!wlc->compositor, !!wlc->shm,
+             !!wlc->zwlr_layer_shell);
 
     // set up the surface
     make_surfaces(wlc);
-    INFO("surface commit");
-    wl_surface_commit(wlc->surface);
-    while (wl_display_dispatch(wlc->display) != -1 && !wlc->configured) {
-        // blank on purpose
-    }
+    INFO("pre-loop");
+    wl_display_roundtrip(wlc->display);
+    // while (wl_display_dispatch(wlc->display) != -1 && !wlc->configured) {
+    //     // blank on purpose
+    // }
+    // INFO("post-loop");
     // once that loop exits, the configure listener above for surface is called
     // this is where the size gets set and the window begins to exist
 }
