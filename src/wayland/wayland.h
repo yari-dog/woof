@@ -5,7 +5,8 @@
 #include <stdint.h>
 
 // hold data for wayland shit
-typedef struct wlc_t {
+typedef struct wlc_t
+{
     struct wl_display *display;
     struct wl_surface *surface;
     struct wl_registry *registry;
@@ -25,12 +26,13 @@ typedef struct wlc_t {
     char *title;
 } wlc_t;
 
-wlc_t *wlc_init();
-void wlc_start(wlc_t *wlc);
+wlc_t *wlc_init ();
+void wlc_start (wlc_t *wlc);
 
-void resize_handler(wlc_t *wlc, uint32_t width, uint32_t height);
+void resize_handler (wlc_t *wlc, uint32_t width, uint32_t height);
+void set_size (wlc_t *wlc, uint32_t width, uint32_t height);
 
-void draw_frame(wlc_t *wlc);
+void draw_frame (wlc_t *wlc);
 
-void wlc_disconnect(wlc_t *wlc);
+void wlc_disconnect (wlc_t *wlc);
 #endif
