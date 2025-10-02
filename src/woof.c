@@ -2,6 +2,7 @@
 #include "state.h"
 #include "util.h"
 #include "wayland/wayland.h"
+#include <string.h>
 #define WAYLAND 1
 #define X11     0
 
@@ -16,23 +17,28 @@ init_woof ()
     INFO ("woof initiating :o");
     woof_t *woof   = malloc (sizeof (woof_t));
     state_t *state = malloc (sizeof (state_t));
+    keys_t *keys   = malloc (sizeof (keys_t));
+    memset (woof, 0, sizeof (woof_t));
+    memset (state, 0, sizeof (state_t));
+    memset (keys, 0, sizeof (keys_t));
 
     woof->state = state;
+    state->keys = keys;
 
     // TODO: actually implement if (wayland)
     if (WAYLAND)
         {
-            woof->state->wlc        = wlc_init ();
-            woof->state->wlc->state = state; // migraine inducing statement
-            woof->start             = wlc_start;
-            woof->main_loop         = wlc_main_loop;
-            woof->cleanup           = wlc_disconnect;
+            state->wlc        = wlc_init ();
+            state->wlc->state = state; // migraine inducing statement
+            woof->start       = wlc_start;
+            woof->main_loop   = wlc_main_loop;
+            woof->cleanup     = wlc_disconnect;
         }
     else if (X11)
         {
             /* setup for x11 would be as follows:
-             * woof->state->xc            = xc_init ();
-             * woof->state->xc->state    = state; // migraine inducing statement
+             * state->xc            = xc_init ();
+             * state->xc->state    = state; // migraine inducing statement
              * woof->start                = xc_start;
              * woof->main_loop            = xc_main_loop;
              * woof->cleanup              = xc_disconnect;
@@ -50,5 +56,7 @@ void
 destroy_woof (woof_t *woof)
 {
     woof->cleanup (woof->state);
+    free (woof->state->keys);
+    free (woof->state);
     free (woof);
 }

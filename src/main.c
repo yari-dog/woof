@@ -6,6 +6,7 @@
 int
 main ()
 {
+    // build initial data structure for woof, including abstracting windowing server
     woof_t *woof = init_woof ();
     woof->start (woof->state);
 

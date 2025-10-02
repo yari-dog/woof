@@ -2,10 +2,15 @@
 #define STATE_H
 #include "wayland/wayland.h"
 
+typedef struct keys_t
+{
+    char *current_input;
+} keys_t;
+
 typedef struct state_t
 {
     struct wlc_t *wlc;
-    char *current_input;
+    struct keys_t *keys;
     char *title;
     bool close;
     uint32_t width;
