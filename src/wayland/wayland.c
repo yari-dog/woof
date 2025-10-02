@@ -1,8 +1,8 @@
 #include "wayland.h"
 #include "../../include/wlr-layer-shell.h"
 #include "../render.h"
+#include "../state.h"
 #include "../util.h"
-#include "../woof.h"
 #include "wayland-listeners.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -24,8 +24,8 @@ void wlc_set_title (wlc_t *wlc, char *title, int size);
 void
 wlc_init_buffer (wlc_t *wlc)
 {
-    INFO ("initing buffer %u %u", wlc->width, wlc->height);
-    int size = wlc->height * wlc->stride;
+    INFO ("initing buffer %u %u", wlc->state->width, wlc->state->height);
+    int size = wlc->state->height * wlc->state->stride;
 
     // make the file
     int fd = create_shm_file (size);
@@ -37,12 +37,12 @@ wlc_init_buffer (wlc_t *wlc)
     wlc->shm_pool = wl_shm_create_pool (wlc->shm, fd,
                                         size); // TODO: is this a race condition waiting to
                                                // happen with the above line
-    wlc->buffer
-        = wl_shm_pool_create_buffer (wlc->shm_pool, 0, wlc->width, wlc->height, wlc->stride, WL_SHM_FORMAT_XRGB8888);
+    wlc->buffer = wl_shm_pool_create_buffer (wlc->shm_pool, 0, wlc->state->width, wlc->state->height,
+                                             wlc->state->stride, WL_SHM_FORMAT_XRGB8888);
     wl_shm_pool_destroy (wlc->shm_pool);
     close (fd);
 
-    INFO ("%s buffed size: %ux%u", wlc->title, wlc->width, wlc->height);
+    INFO ("%s buffed size: %ux%u", wlc->state->title, wlc->state->width, wlc->state->height);
 }
 
 void
@@ -51,7 +51,7 @@ wlc_wipe_buffer (wlc_t *wlc)
     if (wlc->buffer_data)
         {
             INFO ("unmapping buffer");
-            munmap (wlc->buffer_data, wlc->height * wlc->stride);
+            munmap (wlc->buffer_data, wlc->state->height * wlc->state->stride);
         }
 }
 
@@ -61,11 +61,11 @@ wlc_set_surface (wlc_t *wlc)
     wlc_wipe_buffer (wlc);
     wlc_init_buffer (wlc);
 
-    render (wlc->buffer_data, wlc->height * wlc->stride, wlc->width, wlc->height);
+    render (wlc->buffer_data, wlc->state->height * wlc->state->stride, wlc->state->width, wlc->state->height);
 
     wl_surface_set_buffer_scale (wlc->surface, 1);
     wl_surface_attach (wlc->surface, wlc->buffer, 0, 0);
-    wl_surface_damage_buffer (wlc->surface, 0, 0, wlc->width, wlc->height);
+    wl_surface_damage_buffer (wlc->surface, 0, 0, wlc->state->width, wlc->state->height);
     wl_surface_commit (wlc->surface);
     INFO ("frame rendered :o");
 }
@@ -73,12 +73,12 @@ wlc_set_surface (wlc_t *wlc)
 void
 wlc_set_size (wlc_t *wlc, uint32_t width, uint32_t height)
 {
-    wlc->width  = width;
-    wlc->height = height;
-    wlc->stride = wlc->width * COLORDEPTHSLUDGE; // TODO: change from hardcoded sludge
-                                                 // if (wlc->zwlr_layer_surface)
-    zwlr_layer_surface_v1_set_size (wlc->zwlr_layer_surface, wlc->width, wlc->height);
-    INFO ("%s resized size: %ux%u", wlc->title, wlc->width, wlc->height);
+    wlc->state->width  = width;
+    wlc->state->height = height;
+    wlc->state->stride = wlc->state->width * COLORDEPTHSLUDGE; // TODO: change from hardcoded sludge
+                                                               // if (wlc->zwlr_layer_surface)
+    zwlr_layer_surface_v1_set_size (wlc->zwlr_layer_surface, wlc->state->width, wlc->state->height);
+    INFO ("%s resized size: %ux%u", wlc->state->title, wlc->state->width, wlc->state->height);
 }
 
 void
@@ -96,8 +96,8 @@ wlc_make_surfaces (wlc_t *wlc)
     wl_surface_add_listener (wlc->surface, &wl_surface_listener, wlc);
 
     // wlr-layer-shell-unstable-v1
-    wlc->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface (wlc->zwlr_layer_shell, wlc->surface, wlc->output,
-                                                                     ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->title);
+    wlc->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface (
+        wlc->zwlr_layer_shell, wlc->surface, wlc->output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->state->title);
     wlc_set_size (wlc, 80, 80);
     zwlr_layer_surface_v1_set_anchor (wlc->zwlr_layer_surface,
                                       ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
@@ -114,12 +114,12 @@ wlc_make_surfaces (wlc_t *wlc)
 void
 wlc_set_title (wlc_t *wlc, char *title, int size)
 {
-    if (wlc->title)
-        free (wlc->title);
+    if (wlc->state->title)
+        free (wlc->state->title);
     char *title_buf = malloc (size);
     strcpy (title_buf, title);
-    wlc->title = title_buf;
-    INFO ("title set: %s", wlc->title);
+    wlc->state->title = title_buf;
+    INFO ("title set: %s", wlc->state->title);
 }
 
 wlc_t *
@@ -130,8 +130,6 @@ wlc_init ()
     memset (wlc, 0, sizeof (wlc_t));
 
     // set values etc
-    char *default_title = ":woof";
-    wlc_set_title (wlc, default_title, sizeof (default_title + 1));
     wlc->output = NULL;
 
     return wlc;
@@ -142,6 +140,7 @@ wlc_start (state_t *state)
 {
     wlc_t *wlc = state->wlc;
     INFO ("wlc_init");
+    wlc_set_title (state->wlc, ":woof", sizeof (":woof"));
     // connect display
     wlc->display = wl_display_connect (NULL);
 

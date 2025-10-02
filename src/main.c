@@ -1,4 +1,3 @@
-#include "util.h"
 #include "wayland/wayland.h"
 #include "woof.h"
 #include <wayland-client-core.h>
@@ -11,7 +10,7 @@ main ()
     woof->start (woof->state);
 
     // main loop. entry etc etc etc
-    while (!*woof->state->close)
+    while (!woof->state->close)
         {
             woof->main_loop (woof->state);
         }

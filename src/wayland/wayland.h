@@ -20,13 +20,9 @@ typedef struct wlc_t
     struct zwlr_layer_shell_v1 *zwlr_layer_shell;
     struct zwlr_layer_surface_v1 *zwlr_layer_surface;
     struct wl_output *output;
+    struct state_t *state;
     uint32_t *buffer_data;
-    uint32_t width;
-    uint32_t height;
-    uint32_t stride; // how many bytes is there in a line
     bool configured;
-    char *title;
-    bool close;
 } wlc_t;
 
 /*

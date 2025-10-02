@@ -1,4 +1,5 @@
 #include "../../include/wlr-layer-shell.h"
+#include "../state.h"
 #include "../util.h"
 #include "wayland.h"
 #include <wayland-client-protocol.h>
@@ -43,7 +44,7 @@ zwlr_layer_surface_config_handler (void *userdata, struct zwlr_layer_surface_v1 
     IN_MESSAGE ("zwlr_layer_surface_configure: s(%i) %ix%i", serial, width, height);
     wlc_t *wlc = (struct wlc_t *)userdata;
 
-    if (!wlc->configured || (width != wlc->width || height != wlc->height))
+    if (!wlc->configured || (width != wlc->state->width || height != wlc->state->height))
         {
             wlc_set_size (wlc, width, height);
         }
@@ -58,6 +59,6 @@ void
 zwlr_layer_surface_close_handler (void *userdata, struct zwlr_layer_surface_v1 *surface)
 {
     IN_MESSAGE ("zwlr_layer_surface_close :3");
-    wlc_t *wlc = (struct wlc_t *)userdata;
-    wlc->close = true;
+    wlc_t *wlc        = (struct wlc_t *)userdata;
+    wlc->state->close = true;
 }

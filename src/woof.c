@@ -22,24 +22,26 @@ init_woof ()
     // TODO: actually implement if (wayland)
     if (WAYLAND)
         {
-            woof->state->wlc           = wlc_init ();
-            woof->main_loop            = wlc_main_loop;
-            woof->start                = wlc_start;
-            woof->cleanup              = wlc_disconnect;
-            woof->state->close         = &woof->state->wlc->close;
-            woof->state->current_input = NULL; //&woof->state->wlc->current_input;
+            woof->state->wlc        = wlc_init ();
+            woof->state->wlc->state = state; // migraine inducing statement
+            woof->start             = wlc_start;
+            woof->main_loop         = wlc_main_loop;
+            woof->cleanup           = wlc_disconnect;
         }
     else if (X11)
         {
             /* setup for x11 would be as follows:
              * woof->state->xc            = xc_init ();
+             * woof->state->xc->state    = state; // migraine inducing statement
+             * woof->start                = xc_start;
              * woof->main_loop            = xc_main_loop;
              * woof->cleanup              = xc_disconnect;
-             * woof->state->close         = &woof->state->xc->close;
-             * woof->state->current_input = &woof->state->xc->current_input;
              */
             die ("uh wait");
         }
+    else
+        die ("no display server ? :(");
+
     INFO ("woof initiated :3");
     return woof;
 }
