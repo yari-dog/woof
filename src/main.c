@@ -8,9 +8,7 @@ int
 main ()
 {
     woof_t *woof = init_woof ();
-
     wlc_start (woof->wlc);
-    INFO ("close %s? %u", woof->wlc->title, woof->wlc->close);
 
     // main loop. entry etc etc etc
     while (!woof->wlc->close)

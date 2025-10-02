@@ -17,14 +17,12 @@ wl_registry_global_handler (void *userdata, struct wl_registry *registry, uint32
     // true until an else in the below statements,,
     bool connected = true;
 
-    if (strcmp (interface, "wl_compositor") == 0)                                         // TODO: return to version
-        wlc->compositor = wl_registry_bind (registry, name, &wl_compositor_interface, 6); // version);
+    if (strcmp (interface, "wl_compositor") == 0) // TODO: return to version
+        wlc->compositor = wl_registry_bind (registry, name, &wl_compositor_interface, version);
     else if (strcmp (interface, "wl_shm") == 0)
-        wlc->shm = wl_registry_bind (registry, name, &wl_shm_interface, 1); // version);
+        wlc->shm = wl_registry_bind (registry, name, &wl_shm_interface, version);
     else if (strcmp (interface, "zwlr_layer_shell_v1") == 0)
-        wlc->zwlr_layer_shell = wl_registry_bind (registry, name, &zwlr_layer_shell_v1_interface, 1); // version);
-    // else if (strcmp(interface, "wl_output_interface") == 0)
-    //     wlc->output_interface = wl_registry_bind(registry, name, &wl_output_interface, version);
+        wlc->zwlr_layer_shell = wl_registry_bind (registry, name, &zwlr_layer_shell_v1_interface, version);
     else
         connected = false;
 

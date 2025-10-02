@@ -29,7 +29,6 @@ init_buffer (wlc_t *wlc)
     // make the file
     int fd = create_shm_file (size);
 
-    // mamory map da file
     wlc->buffer_data = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (wlc->buffer_data == MAP_FAILED)
         die ("fucked up mapping the shmm :\\ sowwy");
