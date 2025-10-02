@@ -1,5 +1,6 @@
 #include "wayland.h"
 #include "../../include/wlr-layer-shell.h"
+#include "../render.h"
 #include "../util.h"
 #include "wayland-listeners.h"
 #include <errno.h>
@@ -15,19 +16,9 @@
 #include <wayland-client.h>
 #define COLORDEPTHSLUDGE 4
 #define BUFFER_SCALE     4
+#define MARGIN           15
 
 void set_title (wlc_t *wlc, char *title, int size);
-
-// void
-// render (wlc_t *wlc)
-// {
-//     memset (wlc->buffer_data, 0xFFFFFFFF, wlc->height * wlc->stride);
-//
-//     wl_surface_set_buffer_scale (wlc->surface, 1);
-//     wl_surface_attach (wlc->surface, wlc->buffer, wlc->width, wlc->height);
-//     wl_surface_damage_buffer (wlc->surface, 0, 0, wlc->width, wlc->height);
-//     wl_surface_commit (wlc->surface);
-// }
 
 void
 init_buffer (wlc_t *wlc)
@@ -65,31 +56,18 @@ wipe_buffer (wlc_t *wlc)
 }
 
 void
-draw_frame (wlc_t *wlc)
+set_surface (wlc_t *wlc)
 {
     wipe_buffer (wlc);
     init_buffer (wlc);
-    INFO ("drawing frame :3");
-    // print checkerboard
-    uint32_t bg    = 0xFF282828;
-    uint32_t color = 0xFFEBDBB2;
-    for (int i = 0; i < wlc->height; ++i)
-        {
-            for (int j = 0; j < wlc->width; ++j)
-                {
-                    if ((i + j / 8 * 8) % 16 < 8)
-                        wlc->buffer_data[i * wlc->width + j] = color;
-                    else
-                        wlc->buffer_data[i * wlc->width + j] = bg;
-                }
-        }
-    // render (wlc);
+
+    render (wlc->buffer_data, wlc->height * wlc->stride, wlc->width, wlc->height);
 
     wl_surface_set_buffer_scale (wlc->surface, 1);
     wl_surface_attach (wlc->surface, wlc->buffer, 0, 0);
     wl_surface_damage_buffer (wlc->surface, 0, 0, wlc->width, wlc->height);
     wl_surface_commit (wlc->surface);
-    INFO ("drawn :o");
+    INFO ("frame rendered :o");
 }
 
 void
@@ -107,18 +85,7 @@ void
 resize_handler (wlc_t *wlc, uint32_t width, uint32_t height)
 {
     INFO ("resizing :3");
-    draw_frame (wlc);
-}
-
-void
-registry_init (wlc_t *wlc)
-{
-
-    wlc->registry = wl_display_get_registry (wlc->display);
-    wl_registry_add_listener (wlc->registry, &registry_listener, wlc);
-
-    // block us till queue dropped
-    wl_display_roundtrip (wlc->display);
+    set_surface (wlc);
 }
 
 void
@@ -137,6 +104,7 @@ make_surfaces (wlc_t *wlc)
     zwlr_layer_surface_v1_set_exclusive_zone (wlc->zwlr_layer_surface, -1);
     zwlr_layer_surface_v1_set_keyboard_interactivity (wlc->zwlr_layer_surface,
                                                       0); // TODO: change this when i no longer need to CTRL+C to close
+    zwlr_layer_surface_v1_set_margin (wlc->zwlr_layer_surface, MARGIN, MARGIN, MARGIN, MARGIN);
     zwlr_layer_surface_v1_add_listener (wlc->zwlr_layer_surface, &zwlr_layer_surface_listener, wlc);
 
     INFO ("surface commit");
@@ -146,14 +114,6 @@ make_surfaces (wlc_t *wlc)
 void
 set_title (wlc_t *wlc, char *title, int size)
 {
-    // example for setting title dynamically
-    // char *current_title = wlc->title;
-    // int length = snprintf(NULL, 0, "%s (%ix%i)", current_title, width, height);
-    // char *title = malloc(length + 1);
-    // snprintf(title, length + 1, "%s (%ix%i)", current_title, width, height);
-    // printf("title = %s\n", title);
-    // set_title(wlc, title, length);
-    // free(title);
     if (wlc->title)
         free (wlc->title);
     char *title_buf = malloc (size);
@@ -173,7 +133,11 @@ wlc_start (wlc_t *wlc)
         exit (errno);
 
     // grab registry and give handlers to it
-    registry_init (wlc);
+    wlc->registry = wl_display_get_registry (wlc->display);
+    wl_registry_add_listener (wlc->registry, &registry_listener, wlc);
+
+    // block us till queue dropped
+    wl_display_roundtrip (wlc->display);
 
     // die if no <thing>
     if (!wlc->compositor || !wlc->shm || !wlc->zwlr_layer_shell)
