@@ -29,10 +29,10 @@ typedef struct wlc_t
 wlc_t *wlc_init ();
 void wlc_start (wlc_t *wlc);
 
-void resize_handler (wlc_t *wlc, uint32_t width, uint32_t height);
-void set_size (wlc_t *wlc, uint32_t width, uint32_t height);
+void wlc_resize_handler (wlc_t *wlc, uint32_t width, uint32_t height);
+void wlc_set_size (wlc_t *wlc, uint32_t width, uint32_t height);
 
-void draw_frame (wlc_t *wlc);
+void wlc_draw_frame (wlc_t *wlc);
 
 void wlc_disconnect (wlc_t *wlc);
 #endif

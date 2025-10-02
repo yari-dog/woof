@@ -18,10 +18,10 @@
 #define BUFFER_SCALE     4
 #define MARGIN           15
 
-void set_title (wlc_t *wlc, char *title, int size);
+void wlc_set_title (wlc_t *wlc, char *title, int size);
 
 void
-init_buffer (wlc_t *wlc)
+wlc_init_buffer (wlc_t *wlc)
 {
     INFO ("initing buffer %u %u", wlc->width, wlc->height);
     int size = wlc->height * wlc->stride;
@@ -45,7 +45,7 @@ init_buffer (wlc_t *wlc)
 }
 
 void
-wipe_buffer (wlc_t *wlc)
+wlc_wipe_buffer (wlc_t *wlc)
 {
     if (wlc->buffer_data)
         {
@@ -55,10 +55,10 @@ wipe_buffer (wlc_t *wlc)
 }
 
 void
-set_surface (wlc_t *wlc)
+wlc_set_surface (wlc_t *wlc)
 {
-    wipe_buffer (wlc);
-    init_buffer (wlc);
+    wlc_wipe_buffer (wlc);
+    wlc_init_buffer (wlc);
 
     render (wlc->buffer_data, wlc->height * wlc->stride, wlc->width, wlc->height);
 
@@ -70,7 +70,7 @@ set_surface (wlc_t *wlc)
 }
 
 void
-set_size (wlc_t *wlc, uint32_t width, uint32_t height)
+wlc_set_size (wlc_t *wlc, uint32_t width, uint32_t height)
 {
     wlc->width  = width;
     wlc->height = height;
@@ -81,14 +81,14 @@ set_size (wlc_t *wlc, uint32_t width, uint32_t height)
 }
 
 void
-resize_handler (wlc_t *wlc, uint32_t width, uint32_t height)
+wlc_resize_handler (wlc_t *wlc, uint32_t width, uint32_t height)
 {
     INFO ("resizing :3");
-    set_surface (wlc);
+    wlc_set_surface (wlc);
 }
 
 void
-make_surfaces (wlc_t *wlc)
+wlc_make_surfaces (wlc_t *wlc)
 {
     INFO ("making surfaces");
     wlc->surface = wl_compositor_create_surface (wlc->compositor);
@@ -97,7 +97,7 @@ make_surfaces (wlc_t *wlc)
     // wlr-layer-shell-unstable-v1
     wlc->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface (wlc->zwlr_layer_shell, wlc->surface, wlc->output,
                                                                      ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->title);
-    set_size (wlc, 80, 80);
+    wlc_set_size (wlc, 80, 80);
     zwlr_layer_surface_v1_set_anchor (wlc->zwlr_layer_surface,
                                       ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
     zwlr_layer_surface_v1_set_exclusive_zone (wlc->zwlr_layer_surface, -1);
@@ -111,7 +111,7 @@ make_surfaces (wlc_t *wlc)
 }
 
 void
-set_title (wlc_t *wlc, char *title, int size)
+wlc_set_title (wlc_t *wlc, char *title, int size)
 {
     if (wlc->title)
         free (wlc->title);
@@ -144,7 +144,7 @@ wlc_start (wlc_t *wlc)
              !!wlc->zwlr_layer_shell);
 
     // set up the surface
-    make_surfaces (wlc);
+    wlc_make_surfaces (wlc);
 }
 
 wlc_t *
@@ -156,7 +156,7 @@ wlc_init ()
 
     // set values etc
     char *default_title = ":woof";
-    set_title (wlc, default_title, sizeof (default_title + 1));
+    wlc_set_title (wlc, default_title, sizeof (default_title + 1));
     wlc->output = NULL;
 
     return wlc;

@@ -45,12 +45,12 @@ zwlr_layer_surface_config_handler (void *userdata, struct zwlr_layer_surface_v1 
 
     if (!wlc->configured || (width != wlc->width || height != wlc->height))
         {
-            set_size (wlc, width, height);
+            wlc_set_size (wlc, width, height);
         }
 
     zwlr_layer_surface_v1_ack_configure (surface, serial);
 
-    resize_handler (wlc, width, height);
+    wlc_resize_handler (wlc, width, height);
     wlc->configured = true;
 }
 
