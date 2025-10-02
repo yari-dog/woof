@@ -67,7 +67,7 @@ wipe_buffer (wlc_t *wlc)
 void
 draw_frame (wlc_t *wlc)
 {
-    // wipe_buffer (wlc);
+    wipe_buffer (wlc);
     init_buffer (wlc);
     INFO ("drawing frame :3");
     // print checkerboard
@@ -133,9 +133,10 @@ make_surfaces (wlc_t *wlc)
                                                                      ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->title);
     set_size (wlc, 80, 80);
     zwlr_layer_surface_v1_set_anchor (wlc->zwlr_layer_surface,
-                                      ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT || ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM);
+                                      ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
     zwlr_layer_surface_v1_set_exclusive_zone (wlc->zwlr_layer_surface, -1);
-    zwlr_layer_surface_v1_set_keyboard_interactivity (wlc->zwlr_layer_surface, 1);
+    zwlr_layer_surface_v1_set_keyboard_interactivity (wlc->zwlr_layer_surface,
+                                                      0); // TODO: change this when i no longer need to CTRL+C to close
     zwlr_layer_surface_v1_add_listener (wlc->zwlr_layer_surface, &zwlr_layer_surface_listener, wlc);
 
     INFO ("surface commit");
