@@ -126,8 +126,7 @@ wlc_t *
 wlc_init ()
 {
     // assign memory and initialise it to 0 for swag purposes
-    wlc_t *wlc = malloc (sizeof (wlc_t));
-    memset (wlc, 0, sizeof (wlc_t));
+    wlc_t *wlc = calloc (0, sizeof (wlc_t));
 
     // set values etc
     wlc->output = NULL;
