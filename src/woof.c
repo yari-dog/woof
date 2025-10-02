@@ -2,6 +2,7 @@
 #include "state.h"
 #include "util.h"
 #include "wayland/wayland.h"
+#include <string.h>
 #define WAYLAND 1
 #define X11     0
 
@@ -14,9 +15,9 @@ init_woof ()
      * such as the function for the main loop logic. this means that main() can be x/wayland agnostic
      */
     INFO ("woof initiating :o");
-    woof_t *woof   = calloc (0, sizeof (woof_t));
-    state_t *state = calloc (0, sizeof (state_t));
-    keys_t *keys   = calloc (0, sizeof (keys_t));
+    woof_t *woof   = calloc (1, sizeof (woof_t));
+    state_t *state = calloc (1, sizeof (state_t));
+    keys_t *keys   = calloc (1, sizeof (keys_t));
 
     woof->state = state;
     state->keys = keys;
