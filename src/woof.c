@@ -32,11 +32,10 @@ init_woof ()
     else if (X11)
         {
             /* setup for x11 would be as follows:
-             *
-             * woof->state->xc   = xc_init ();
-             * woof->main_loop    = xc_main_loop;
-             * woof->cleanup      = xc_disconnect;
-             * woof->state->close = &woof->state->xc->close;
+             * woof->state->xc            = xc_init ();
+             * woof->main_loop            = xc_main_loop;
+             * woof->cleanup              = xc_disconnect;
+             * woof->state->close         = &woof->state->xc->close;
              * woof->state->current_input = &woof->state->xc->current_input;
              */
             die ("uh wait");
