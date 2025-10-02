@@ -3,6 +3,7 @@
 #include "util.h"
 #include "wayland/wayland.h"
 #define WAYLAND 1
+#define X11     0
 
 woof_t *
 init_woof ()
@@ -21,10 +22,24 @@ init_woof ()
     // TODO: actually implement if (wayland)
     if (WAYLAND)
         {
-            woof->state->wlc   = wlc_init ();
-            woof->main_loop    = wlc_main_loop;
-            woof->cleanup      = wlc_disconnect;
-            woof->state->close = &woof->state->wlc->close;
+            woof->state->wlc           = wlc_init ();
+            woof->main_loop            = wlc_main_loop;
+            woof->start                = wlc_start;
+            woof->cleanup              = wlc_disconnect;
+            woof->state->close         = &woof->state->wlc->close;
+            woof->state->current_input = NULL; //&woof->state->wlc->current_input;
+        }
+    else if (X11)
+        {
+            /* setup for x11 would be as follows:
+             *
+             * woof->state->xc   = xc_init ();
+             * woof->main_loop    = xc_main_loop;
+             * woof->cleanup      = xc_disconnect;
+             * woof->state->close = &woof->state->xc->close;
+             * woof->state->current_input = &woof->state->xc->current_input;
+             */
+            die ("uh wait");
         }
     INFO ("woof initiated :3");
     return woof;
@@ -33,5 +48,6 @@ init_woof ()
 void
 destroy_woof (woof_t *woof)
 {
+    woof->cleanup (woof->state);
     free (woof);
 }

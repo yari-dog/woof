@@ -5,6 +5,7 @@
 
 typedef struct woof_t
 {
+    void (*start) (state_t *);
     void (*main_loop) (state_t *);
     void (*cleanup) (state_t *);
     struct state_t *state;

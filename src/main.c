@@ -8,7 +8,7 @@ int
 main ()
 {
     woof_t *woof = init_woof ();
-    wlc_start (woof->state->wlc);
+    woof->start (woof->state);
 
     // main loop. entry etc etc etc
     while (!*woof->state->close)
@@ -17,5 +17,5 @@ main ()
         }
 
     // function that handles shutting down gracefully
-    woof->cleanup (woof->state);
+    destroy_woof (woof);
 }

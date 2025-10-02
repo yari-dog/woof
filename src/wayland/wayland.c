@@ -122,9 +122,25 @@ wlc_set_title (wlc_t *wlc, char *title, int size)
     INFO ("title set: %s", wlc->title);
 }
 
-void
-wlc_start (wlc_t *wlc)
+wlc_t *
+wlc_init ()
 {
+    // assign memory and initialise it to 0 for swag purposes
+    wlc_t *wlc = malloc (sizeof (wlc_t));
+    memset (wlc, 0, sizeof (wlc_t));
+
+    // set values etc
+    char *default_title = ":woof";
+    wlc_set_title (wlc, default_title, sizeof (default_title + 1));
+    wlc->output = NULL;
+
+    return wlc;
+}
+
+void
+wlc_start (state_t *state)
+{
+    wlc_t *wlc = state->wlc;
     INFO ("wlc_init");
     // connect display
     wlc->display = wl_display_connect (NULL);
@@ -146,21 +162,6 @@ wlc_start (wlc_t *wlc)
 
     // set up the surface
     wlc_make_surfaces (wlc);
-}
-
-wlc_t *
-wlc_init ()
-{
-    // assign memory and initialise it to 0 for swag purposes
-    wlc_t *wlc = malloc (sizeof (wlc_t));
-    memset (wlc, 0, sizeof (wlc_t));
-
-    // set values etc
-    char *default_title = ":woof";
-    wlc_set_title (wlc, default_title, sizeof (default_title + 1));
-    wlc->output = NULL;
-
-    return wlc;
 }
 
 // just abstraction idk cleaner in my brain
