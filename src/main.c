@@ -8,18 +8,14 @@ int
 main ()
 {
     woof_t *woof = init_woof ();
-    wlc_start (woof->wlc);
+    wlc_start (woof->state->wlc);
 
     // main loop. entry etc etc etc
-    while (!woof->wlc->close)
+    while (!*woof->state->close)
         {
-            wl_display_flush (woof->wlc->display);
-
-            if (!wl_display_dispatch_pending (woof->wlc->display))
-                if (wl_display_dispatch (woof->wlc->display) < 0)
-                    die ("display dispatch failed :(");
+            woof->main_loop (woof->state);
         }
 
     // function that handles shutting down gracefully
-    wlc_disconnect (woof->wlc);
+    woof->cleanup (woof->state);
 }

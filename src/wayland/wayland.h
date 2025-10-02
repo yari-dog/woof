@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// cant include state.h here or it's recursive. wish there was a way to avoid this.
+typedef struct state_t state_t;
+
 // hold data for wayland shit
 typedef struct wlc_t
 {
@@ -14,16 +17,16 @@ typedef struct wlc_t
     struct wl_shm_pool *shm_pool;
     struct wl_compositor *compositor;
     struct wl_buffer *buffer;
-    uint32_t *buffer_data;
     struct zwlr_layer_shell_v1 *zwlr_layer_shell;
     struct zwlr_layer_surface_v1 *zwlr_layer_surface;
     struct wl_output *output;
+    uint32_t *buffer_data;
     uint32_t width;
     uint32_t height;
     uint32_t stride; // how many bytes is there in a line
     bool configured;
-    bool close;
     char *title;
+    bool close;
 } wlc_t;
 
 wlc_t *wlc_init ();
@@ -34,5 +37,7 @@ void wlc_set_size (wlc_t *wlc, uint32_t width, uint32_t height);
 
 void wlc_draw_frame (wlc_t *wlc);
 
-void wlc_disconnect (wlc_t *wlc);
+// these are stored in the woof struct on wayland init
+void wlc_disconnect (state_t *state);
+void wlc_main_loop (state_t *state);
 #endif

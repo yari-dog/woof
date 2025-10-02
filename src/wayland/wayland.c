@@ -2,6 +2,7 @@
 #include "../../include/wlr-layer-shell.h"
 #include "../render.h"
 #include "../util.h"
+#include "../woof.h"
 #include "wayland-listeners.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -164,8 +165,21 @@ wlc_init ()
 
 // just abstraction idk cleaner in my brain
 void
-wlc_disconnect (wlc_t *wlc)
+wlc_disconnect (state_t *state)
 {
+    wlc_t *wlc = state->wlc;
     INFO ("closing :O");
     wl_display_disconnect (wlc->display);
+}
+
+// the "main loop", IE what gets ran to keep wayland alive
+void
+wlc_main_loop (state_t *state)
+{
+    wlc_t *wlc = state->wlc;
+    wl_display_flush (wlc->display);
+
+    if (!wl_display_dispatch_pending (wlc->display))
+        if (wl_display_dispatch (wlc->display) < 0)
+            die ("display dispatch failed :(");
 }
