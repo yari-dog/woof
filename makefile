@@ -1,10 +1,13 @@
 SRC = $(wildcard src/*.c) $(wildcard src/**/*.c) $(wildcard src/**/**/*.c) $(wildcard src/**/**/**/*.c)
 INCLUDE = $(wildcard include/*.c) $(wildcard include/**/*.c) $(wildcard include/**/**/*.c) $(wildcard include/**/**/**/*.c)
+
+PKGS = -l wayland-client -l xkbcommon
+
 dir:
 	mkdir -p build
 
 main: dir src/main.c
-	gcc -std=c11 -D_POSIX_C_SOURCE=200809L -o build/main $(SRC) $(INCLUDE) -l wayland-client
+	gcc -std=c11 -D_POSIX_C_SOURCE=200809L -o build/main $(SRC) $(INCLUDE) $(PKGS)
 
 xdg-shell:
 	wayland-scanner client-header /usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml include/xdg-shell.h

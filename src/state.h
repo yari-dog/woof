@@ -1,16 +1,12 @@
 #ifndef STATE_H
 #define STATE_H
 #include "wayland/wayland.h"
-
-typedef struct keys_t
-{
-    char *current_input;
-} keys_t;
+#include "xkb.h"
 
 typedef struct state_t
 {
     struct wlc_t *wlc;
-    struct keys_t *keys;
+    struct xkb_t *xkb;
     char *title;
     bool close;
     uint32_t width;

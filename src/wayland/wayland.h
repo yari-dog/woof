@@ -3,6 +3,7 @@
 #include "../../include/wlr-layer-shell.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <wayland-client.h>
 
 // cant include state.h here or it's recursive. wish there was a way to avoid this.
 typedef struct state_t state_t;
@@ -10,18 +11,28 @@ typedef struct state_t state_t;
 // hold data for wayland shit
 typedef struct wlc_t
 {
+    // universally needed
     struct wl_display *display;
-    struct wl_surface *surface;
     struct wl_registry *registry;
     struct wl_shm *shm;
     struct wl_shm_pool *shm_pool;
-    struct wl_compositor *compositor;
+    struct wl_output *output;
     struct wl_buffer *buffer;
+    uint32_t *buffer_data;
+
+    // windowing 
+    struct wl_surface *surface;
+    struct wl_compositor *compositor;
     struct zwlr_layer_shell_v1 *zwlr_layer_shell;
     struct zwlr_layer_surface_v1 *zwlr_layer_surface;
-    struct wl_output *output;
+
+    // input
+    struct wl_seat *seat;
+    struct wl_keyboard *keyboard;
+    struct wl_pointer *pointer;
+
+    // other
     struct state_t *state;
-    uint32_t *buffer_data;
     bool configured;
 } wlc_t;
 

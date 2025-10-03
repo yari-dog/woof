@@ -2,7 +2,7 @@
 #include "state.h"
 #include "util.h"
 #include "wayland/wayland.h"
-#include <string.h>
+#include "xkb.h"
 #define WAYLAND 1
 #define X11     0
 
@@ -17,10 +17,10 @@ init_woof ()
     INFO ("woof initiating :o");
     woof_t *woof   = calloc (1, sizeof (woof_t));
     state_t *state = calloc (1, sizeof (state_t));
-    keys_t *keys   = calloc (1, sizeof (keys_t));
 
     woof->state = state;
-    state->keys = keys;
+
+    state->xkb = xkb_init ();
 
     // TODO: actually implement if (wayland)
     if (WAYLAND)
@@ -53,7 +53,9 @@ void
 destroy_woof (woof_t *woof)
 {
     woof->cleanup (woof->state);
-    free (woof->state->keys);
+
+    // need to do xkb cleanup
+    free (woof->state->xkb);
     free (woof->state);
     free (woof);
 }
