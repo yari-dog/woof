@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 
@@ -52,12 +53,12 @@ timenow ()
 #define IN_MESSAGE(message, args...)                                                                                   \
     PRINTFUNCTION (LOG_FMT (ANSI_COLOR_CYAN) message ANSI_COLOR_RESET NEWLINE, LOG_ARGS ("<-"), ##args)
 
-static void
-noop ()
-{
+static void noop() {
     /*
      * woof :3
      */
 }
+
+int64_t ms_since_epoch ();
 
 #endif

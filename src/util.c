@@ -2,6 +2,8 @@
 // i cba to code this tbh
 #include "util.h"
 #include <fcntl.h>
+#include <math.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <time.h>
@@ -57,4 +59,17 @@ create_shm_file (int size)
 
     INFO ("shm made :3");
     return fd;
+}
+
+int64_t
+ms_since_epoch ()
+{
+    struct timespec tv;
+    clock_gettime (CLOCK_REALTIME, &tv);
+
+    int64_t ms;
+    ms  = tv.tv_nsec / pow (10, 6); // convert ns to ms
+    ms += tv.tv_sec * pow (10, 3);  // add on epoch s to ms
+
+    return ms;
 }

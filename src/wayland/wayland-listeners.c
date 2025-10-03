@@ -6,7 +6,9 @@
 #include "wayland.h"
 #include <sys/mman.h>
 #include <unistd.h>
+#include <wayland-client-protocol.h>
 #include <wayland-client.h>
+#include <wayland-util.h>
 #include <xkbcommon/xkbcommon.h>
 #define COLORDEPTHSLUDGE 4
 
@@ -117,10 +119,27 @@ wl_keyboard_keymap_handler (void *userdata, struct wl_keyboard *keyboard, uint32
 }
 
 void
+wl_handle_key (wlc_t *wlc, uint32_t keycode, bool release)
+{
+    IN_MESSAGE ("key: %u", keycode);
+
+    if (release)
+        xkb_handle_key (wlc->state, keycode);
+}
+
+void
 wl_keyboard_enter_handler (void *userdata, struct wl_keyboard *keyboard, uint32_t serial, struct wl_surface *surface,
                            struct wl_array *keys)
 {
     IN_MESSAGE ("keyboard entered");
+    wlc_t *wlc = (struct wlc_t *)userdata;
+
+    uint32_t *key;
+    wl_array_for_each (key, keys)
+    {
+        uint32_t keycode = *(key + 8);
+        wl_handle_key (wlc, keycode, true);
+    }
 }
 void
 wl_keyboard_leave_handler (void *userdata, struct wl_keyboard *keyboard, uint32_t serial, struct wl_surface *surface)
@@ -131,16 +150,20 @@ void
 wl_keyboard_key_handler (void *userdata, struct wl_keyboard *keyboard, uint32_t serial, uint32_t time, uint32_t key,
                          uint32_t state)
 {
-    IN_MESSAGE ("key %u", key);
     wlc_t *wlc = (struct wlc_t *)userdata;
-    if (key == 16) // q for quit
-        wlc->state->close = true;
+
+    uint32_t keycode = key + 8;
+    bool release     = state == WL_KEYBOARD_KEY_STATE_RELEASED;
+    wl_handle_key (wlc, keycode, release);
 }
 void
 wl_keyboard_modifiers_handler (void *userdata, struct wl_keyboard *keyboard, uint32_t serial, uint32_t mods_depressed,
                                uint32_t mods_latched, uint32_t mods_locked, uint32_t group)
 {
     IN_MESSAGE ("mods locked");
+    wlc_t *wlc = (struct wlc_t *)userdata;
+
+    xkb_state_update_mask (wlc->state->xkb->state, mods_depressed, mods_latched, mods_locked, 0, 0, group);
 }
 void
 wl_keyboard_repeat_info_handler (void *userdata, struct wl_keyboard *keyboard, int32_t rate, int32_t delay)
