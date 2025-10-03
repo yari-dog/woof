@@ -54,8 +54,7 @@ state_backspace_input (state_t *state, int pos)
     if (!state->current_command_string || strcmp (state->current_command_string, "") == 0)
         return;
 
-    char *new_str
-        = malloc (strlen (state->current_command_string) * sizeof (char)); // ignoring \0 so that it gets smaller :3
+    char *new_str = malloc (strlen (state->current_command_string)); // ignoring \0 so that it gets smaller :3
 
     // avoids (NULL) in the string
     if (strlen (state->current_command_string) == 1)
