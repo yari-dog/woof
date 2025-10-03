@@ -107,8 +107,8 @@ wlc_make_surfaces (wlc_t *wlc)
     zwlr_layer_surface_v1_set_margin (wlc->zwlr_layer_surface, MARGIN, MARGIN, MARGIN, MARGIN);
     zwlr_layer_surface_v1_add_listener (wlc->zwlr_layer_surface, &zwlr_layer_surface_listener, wlc);
 
-    INFO ("surface commit");
     wl_surface_commit (wlc->surface);
+    INFO ("surface commit");
 }
 
 void
@@ -116,6 +116,7 @@ wlc_set_title (wlc_t *wlc, char *title, int size)
 {
     if (wlc->state->title)
         free (wlc->state->title);
+
     char *title_buf = malloc (size);
     strcpy (title_buf, title);
     wlc->state->title = title_buf;
@@ -127,7 +128,6 @@ wlc_init ()
 {
     // assign memory and initialise it to 0 for swag purposes
     wlc_t *wlc = calloc (1, sizeof (wlc_t));
-    // memset (wlc, 0, sizeof (wlc_t));
 
     // set values etc
     wlc->output = NULL;
