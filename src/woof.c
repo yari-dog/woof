@@ -18,7 +18,8 @@ init_woof ()
     woof_t *woof   = calloc (1, sizeof (woof_t));
     state_t *state = calloc (1, sizeof (state_t));
 
-    woof->state = state;
+    woof->state                   = state;
+    state->current_command_string = calloc (1, sizeof (""));
 
     state->xkb = xkb_init ();
 

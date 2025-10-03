@@ -41,14 +41,9 @@ xkb_handle_quick_double_key (state_t *state, clock_t current_time, char32_t key)
 void
 state_append_input (state_t *state, char32_t key)
 {
-    char *new_str = malloc (sizeof (state->current_command_string) + sizeof (key) + sizeof ('\0'));
-    if (state->current_command_string) // TODO: surely there's a way to sprintf without worrying bout it typing "(NULL)"
-        {
-            sprintf (new_str, "%s%c", state->current_command_string, key);
-            free (state->current_command_string);
-        }
-    else
-        sprintf (new_str, "%c", key);
+    char *new_str = calloc (1, strlen (state->current_command_string) + sizeof (key) + sizeof ('\0'));
+    sprintf (new_str, "%s%c", state->current_command_string, key);
+    free (state->current_command_string);
 
     state->current_command_string = new_str;
 }
@@ -92,18 +87,14 @@ xkb_handle_key (state_t *state, uint32_t keycode)
 
     if (!utf)
         return;
-    if (keycode == 22)
-        state_backspace_input (state, strlen (state->current_command_string) - 1);
+    if (keycode == 22)                                                             // backspace
+        state_backspace_input (state, strlen (state->current_command_string) - 1); // TODO: selecting ?
+
     else if (xkb->time_of_last_key)
-        {
-            INFO ("last key: %li current time: %li time elapsed: %li", xkb->time_of_last_key, current_time,
-                  current_time - xkb->time_of_last_key);
-            xkb_handle_quick_double_key (state, current_time, utf);
-        }
+        xkb_handle_quick_double_key (state, current_time, utf);
+
     else
-        {
-            state_append_input (state, utf);
-        }
+        state_append_input (state, utf);
 
     xkb->time_of_last_key = current_time;
     xkb->last_key         = utf;
