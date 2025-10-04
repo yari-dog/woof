@@ -87,6 +87,7 @@ xkb_handle_quick_double_key (state_t *state, clock_t current_time, char *buf)
             state->close = true;
         }
 
+    // been using this to test
     if (xkb->last_key == 'e' && buf[0] == 'e')
         has_binding = true;
 
@@ -115,22 +116,17 @@ xkb_handle_key (state_t *state, uint32_t keycode)
             break;
         default:
             if (xkb_keysym_to_utf8 (sym, buf, 8))
-                {
-                    char32_t utf = buf[0];
-                    if (xkb->time_of_last_key && current_time - xkb->time_of_last_key > 0)
-                        xkb_handle_quick_double_key (state, current_time, buf);
-                    else
-                        insert (state, buf, strnlen (buf, 8));
-
-                    xkb->time_of_last_key = current_time;
-                    xkb->last_key         = utf;
-                }
+                xkb_handle_quick_double_key (state, current_time, buf);
         }
+    xkb->time_of_last_key = current_time;
+    xkb->last_key         = buf[0];
+
     IN_MESSAGE ("(sym %d) (kc %u)", sym, keycode);
     INFO ("current command: %s, %lu, %zu", state->current_command_string, strlen (state->current_command_string),
           state->cursor);
 }
 
+// V----------------------- im a little unsure if theese two ever will exist seperately. i dont think so tbh.
 void
 xkb_set_state (xkb_t *xkb)
 {
@@ -153,6 +149,7 @@ xkb_set_keymap (xkb_t *xkb, char *keymap_str)
 
     xkb_set_state (xkb);
 }
+// ^--------------------------
 
 xkb_t *
 xkb_init ()

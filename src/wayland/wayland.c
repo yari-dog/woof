@@ -15,17 +15,16 @@
 #include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
 #include <wayland-client.h>
-#define COLORDEPTHSLUDGE 4
-#define BUFFER_SCALE     4
-#define MARGIN           15
+#define BUFFER_SCALE 4
+#define MARGIN       15
 
 void wlc_set_title (wlc_t *wlc, char *title, int size);
 
 void
 wlc_init_buffer (wlc_t *wlc)
 {
-    INFO ("initing buffer %u %u", wlc->state->width, wlc->state->height);
-    int size = wlc->state->height * wlc->state->stride;
+    INFO ("initing buffer %u %u", wlc->state->render_context->width, wlc->state->render_context->height);
+    int size = wlc->state->render_context->height * wlc->state->render_context->stride;
 
     // make the file
     int fd = create_shm_file (size);
@@ -37,12 +36,14 @@ wlc_init_buffer (wlc_t *wlc)
     wlc->shm_pool = wl_shm_create_pool (wlc->shm, fd,
                                         size); // TODO: is this a race condition waiting to
                                                // happen with the above line
-    wlc->buffer = wl_shm_pool_create_buffer (wlc->shm_pool, 0, wlc->state->width, wlc->state->height,
-                                             wlc->state->stride, WL_SHM_FORMAT_XRGB8888);
+    wlc->buffer = wl_shm_pool_create_buffer (wlc->shm_pool, 0, wlc->state->render_context->width,
+                                             wlc->state->render_context->height, wlc->state->render_context->stride,
+                                             WL_SHM_FORMAT_ARGB8888);
     wl_shm_pool_destroy (wlc->shm_pool);
     close (fd);
 
-    INFO ("%s buffed size: %ux%u", wlc->state->title, wlc->state->width, wlc->state->height);
+    INFO ("%s buffed size: %ux%u", wlc->state->title, wlc->state->render_context->width,
+          wlc->state->render_context->height);
 }
 
 void
@@ -51,7 +52,7 @@ wlc_wipe_buffer (wlc_t *wlc)
     if (wlc->buffer_data)
         {
             INFO ("unmapping buffer");
-            munmap (wlc->buffer_data, wlc->state->height * wlc->state->stride);
+            munmap (wlc->buffer_data, wlc->state->render_context->height * wlc->state->render_context->stride);
         }
 }
 
@@ -61,11 +62,12 @@ wlc_set_surface (wlc_t *wlc)
     wlc_wipe_buffer (wlc);
     wlc_init_buffer (wlc);
 
-    render (wlc->buffer_data, wlc->state->height * wlc->state->stride, wlc->state->width, wlc->state->height);
+    render (wlc->state->render_context, wlc->buffer_data);
 
     wl_surface_set_buffer_scale (wlc->surface, 1);
     wl_surface_attach (wlc->surface, wlc->buffer, 0, 0);
-    wl_surface_damage_buffer (wlc->surface, 0, 0, wlc->state->width, wlc->state->height);
+    wl_surface_damage_buffer (wlc->surface, 0, 0, wlc->state->render_context->width,
+                              wlc->state->render_context->height);
     wl_surface_commit (wlc->surface);
     INFO ("frame rendered :o");
 }
@@ -73,12 +75,13 @@ wlc_set_surface (wlc_t *wlc)
 void
 wlc_set_size (wlc_t *wlc, uint32_t width, uint32_t height)
 {
-    wlc->state->width  = width;
-    wlc->state->height = height;
-    wlc->state->stride = wlc->state->width * COLORDEPTHSLUDGE; // TODO: change from hardcoded sludge
-                                                               // if (wlc->zwlr_layer_surface)
-    zwlr_layer_surface_v1_set_size (wlc->zwlr_layer_surface, wlc->state->width, wlc->state->height);
-    INFO ("%s resized size: %ux%u", wlc->state->title, wlc->state->width, wlc->state->height);
+    render_context_t *render_context = wlc->state->render_context;
+    render_context->width            = width;
+    render_context->height           = height;
+    render_context->stride           = width * render_context->color_depth; // TODO: change from hardcoded sludge
+                                                                            // if (wlc->zwlr_layer_surface)
+    zwlr_layer_surface_v1_set_size (wlc->zwlr_layer_surface, render_context->width, render_context->height);
+    INFO ("%s resized size: %ux%u", wlc->state->title, render_context->width, render_context->height);
 }
 
 void
@@ -98,7 +101,7 @@ wlc_make_surfaces (wlc_t *wlc)
     // wlr-layer-shell-unstable-v1
     wlc->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface (
         wlc->zwlr_layer_shell, wlc->surface, wlc->output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->state->title);
-    wlc_set_size (wlc, 80, 80);
+    wlc_set_size (wlc, 800, 400);
     zwlr_layer_surface_v1_set_anchor (wlc->zwlr_layer_surface,
                                       ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
     zwlr_layer_surface_v1_set_exclusive_zone (wlc->zwlr_layer_surface, -1);

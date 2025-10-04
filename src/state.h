@@ -1,7 +1,8 @@
 #ifndef STATE_H
 #define STATE_H
-#include "wayland/wayland.h"
-#include "xkb.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 typedef struct state_t
 {
@@ -13,13 +14,11 @@ typedef struct state_t
     size_t cursor;
 
     // various window server agnostic bits
+    struct render_context_t *render_context;
     char *title;
     char *current_command_string;
     int32_t ccs_buffsize;
     bool close;
-    uint32_t width;
-    uint32_t height;
-    uint32_t stride; // how many bytes is there in a line
 } state_t;
 
 
