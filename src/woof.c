@@ -15,11 +15,10 @@ init_woof ()
      * such as the function for the main loop logic. this means that main() can be x/wayland agnostic
      */
     INFO ("woof initiating :o");
-    woof_t *woof   = calloc (1, sizeof (woof_t));
-    state_t *state = calloc (1, sizeof (state_t));
+    woof_t *woof = calloc (1, sizeof (woof_t));
 
-    woof->state                   = state;
-    state->current_command_string = calloc (1, sizeof (""));
+    state_t *state = init_state ();
+    woof->state    = state;
 
     state->xkb = xkb_init ();
 

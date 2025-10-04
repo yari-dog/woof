@@ -121,7 +121,7 @@ wl_keyboard_keymap_handler (void *userdata, struct wl_keyboard *keyboard, uint32
 void
 wl_handle_key (wlc_t *wlc, uint32_t keycode, bool release)
 {
-    IN_MESSAGE ("key: %u", keycode);
+    IN_MESSAGE ("key: %u (%c)", keycode, release ? '^' : 'v');
 
     if (release)
         xkb_handle_key (wlc->state, keycode);

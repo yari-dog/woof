@@ -6,67 +6,97 @@
 #include <string.h>
 #include <time.h>
 #include <uchar.h>
+#include <xkbcommon/xkbcommon-keysyms.h>
 #include <xkbcommon/xkbcommon.h>
 #define DOUBLEKEYLIMIT 250 // in ms
 
-void state_append_input (state_t *state, char32_t key);
+// void state_insert_input (state_t *state, char32_t key);
+//
+// void state_backspace_input (state_t *state, int pos);
 
-void state_backspace_input (state_t *state, int pos);
+size_t
+next_rune (state_t *state, int n)
+{
+    ssize_t i;
+    for (i = state->cursor + n; i + n >= 0 && (state->current_command_string[i] & 0xc0) == 0x80; i += n)
+        ;
+
+    return i;
+}
 
 void
-xkb_handle_quick_double_key (state_t *state, clock_t current_time, char32_t key)
+expand_command_str_buf (state_t *state, ssize_t n)
+{
+
+    INFO ("------------------------------- expanding buf");
+    char *next = state->current_command_string, *prev = NULL;
+    int next_size
+        = state->ccs_buffsize + BUFFSIZE + n; // cba to make it exact. just have that buffsize added for padding.
+
+    if ((next = (char *)realloc (prev = next, next_size)) == NULL)
+        die ("realloc on ccs died :/");
+
+    if (strcmp (state->current_command_string, prev) != 0)
+        INFO ("realloc on css weird, %s %lu %s %lu", prev, strlen (prev), next, strlen (next));
+
+    state->current_command_string  = next;
+    state->ccs_buffsize           += BUFFSIZE; // just add the default on lmao
+    INFO ("expanded buf --------------------------------");
+}
+
+// TODO: is the memory management here atrocious
+void
+insert (state_t *state, char *text, ssize_t n)
+{
+    // check if backspace will put cursor into the negative
+    // (could probably do it branchlessly easily but that will be unreadable)
+    if ((int)state->cursor + n < 0)
+        n = MAX (0, (int)state->cursor + n);
+
+    if (strlen (state->current_command_string) + NULL_TERM_SIZE + n > state->ccs_buffsize)
+        expand_command_str_buf (state, n);
+
+    //  imagine string is 1-10 , cursor is 6, and n is 5, as if we are inserting 5 characters in.
+    //
+    //
+    //  first you gotta first move the stuff after out of the way.
+    memmove (&state->current_command_string[state->cursor + n], &state->current_command_string[state->cursor],
+             strlen (state->current_command_string) - state->cursor - MAX (0, n) + NULL_TERM_SIZE);
+    //   1 2 3 4 5 6 (cursor) - - - - - (cursor + n) 7 8 9 10
+    //   (the - represents junk)
+    //
+    //   next is inserting the new text
+    if (text)
+        memcpy (&state->current_command_string[state->cursor], text, n);
+
+    // update cursor
+    state->cursor += n;
+}
+
+void
+xkb_handle_quick_double_key (state_t *state, clock_t current_time, char *buf)
 {
     xkb_t *xkb = state->xkb;
     if (current_time - xkb->time_of_last_key > DOUBLEKEYLIMIT)
-        return state_append_input (state, key); // return the result of void (i dont want to have to add braces)
+        return insert (state, buf, strnlen (buf, 8)); // return the result of void (i dont want to have to add braces)
 
     bool has_binding = false;
 
     // TODO: real logic and not just this
-    if (xkb->last_key == 'q' && key == 'q')
+    // ig can do it either way
+    if (xkb->last_key == 'q' && strcmp (buf, "q") == 0)
         {
             has_binding  = true;
             state->close = true;
         }
 
-    if (xkb->last_key == 'e' && key == 'e')
+    if (xkb->last_key == 'e' && buf[0] == 'e')
         has_binding = true;
 
     if (has_binding)
-        state_backspace_input (state, strlen (state->current_command_string) - 1);
+        insert (state, NULL, next_rune (state, -1) - state->cursor);
     else
-        state_append_input (state, key);
-}
-
-void
-state_append_input (state_t *state, char32_t key)
-{
-    char *new_str = calloc (1, strlen (state->current_command_string) + sizeof (key) + sizeof ('\0'));
-    sprintf (new_str, "%s%c", state->current_command_string, key);
-    free (state->current_command_string);
-
-    state->current_command_string = new_str;
-}
-
-void
-state_backspace_input (state_t *state, int pos)
-{
-    if (!state->current_command_string || strcmp (state->current_command_string, "") == 0)
-        return;
-
-    char *new_str = malloc (strlen (state->current_command_string)); // ignoring \0 so that it gets smaller :3
-
-    // avoids (NULL) in the string
-    if (strlen (state->current_command_string) == 1)
-        sprintf (new_str, "");
-
-    // loop through and append each to new_str except for pos
-    for (int i = 0; i < strlen (state->current_command_string); i++)
-        if (i != pos)
-            sprintf (&new_str[i], "%c", state->current_command_string[i]);
-
-    free (state->current_command_string);
-    state->current_command_string = new_str;
+        insert (state, buf, strnlen (buf, 8)); // return the result of void (i dont want to have to add braces)
 }
 
 void
@@ -77,27 +107,32 @@ xkb_handle_key (state_t *state, uint32_t keycode)
     xkb_t *xkb       = state->xkb;
     xkb_keysym_t sym = xkb_state_key_get_one_sym (xkb->state, keycode);
 
-    char buffer[128];
-    xkb_keysym_get_name (sym, buffer, sizeof (buffer));
-    xkb_state_key_get_utf8 (xkb->state, keycode, buffer, sizeof (buffer));
+    IN_MESSAGE ("(sym %d) (kc %u)", sym, keycode);
 
-    char32_t utf = buffer[0]; // TODO: is this memory safe?
-    IN_MESSAGE ("utf-8: %-4c (real? %i) (sym %d) (kc %u)", utf, !!utf, sym, keycode);
+    char buf[8];
+    switch (sym)
+        {
+        case XKB_KEY_BackSpace:
+            insert (state, NULL, next_rune (state, -1) - state->cursor); // TODO: selecting ?
+            break;
+        case XKB_KEY_Escape:
+            state->close = true;
+            break;
+        default:
+            if (xkb_keysym_to_utf8 (sym, buf, 8))
+                {
+                    char32_t utf = buf[0];
+                    if (xkb->time_of_last_key && current_time - xkb->time_of_last_key > 0)
+                        xkb_handle_quick_double_key (state, current_time, buf);
+                    else
+                        insert (state, buf, strnlen (buf, 8));
 
-    if (!utf)
-        return;
-    if (keycode == 22)                                                             // backspace
-        state_backspace_input (state, strlen (state->current_command_string) - 1); // TODO: selecting ?
-
-    else if (xkb->time_of_last_key)
-        xkb_handle_quick_double_key (state, current_time, utf);
-
-    else
-        state_append_input (state, utf);
-
-    xkb->time_of_last_key = current_time;
-    xkb->last_key         = utf;
-    INFO ("current command: %s, %lu", state->current_command_string, strlen (state->current_command_string));
+                    xkb->time_of_last_key = current_time;
+                    xkb->last_key         = utf;
+                }
+        }
+    INFO ("current command: %s, %lu, %zu", state->current_command_string, strlen (state->current_command_string),
+          state->cursor);
 }
 
 void

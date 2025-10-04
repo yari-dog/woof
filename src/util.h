@@ -10,6 +10,9 @@
 
 int create_shm_file (int size);
 
+#define MAX(A, B) ((A) > (B) ? (A) : (B))
+#define MIN(A, B) ((A) < (B) ? (A) : (B))
+
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -22,6 +25,9 @@ int create_shm_file (int size);
 #define LOG_ARGS(LOG_TAG)          timenow (), LOG_TAG
 #define LOG_FMT(LOG_COLOR)         "(%s)" LOG_COLOR "  %s "
 #define NEWLINE                    "\n"
+
+#define NULL_TERM_SIZE sizeof('\0')
+#define BUFFSIZE 128 * sizeof (char)
 
 static inline char *
 timenow ()
