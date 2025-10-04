@@ -10,13 +10,10 @@
 #include <xkbcommon/xkbcommon.h>
 #define DOUBLEKEYLIMIT 250 // in ms
 
-// void state_insert_input (state_t *state, char32_t key);
-//
-// void state_backspace_input (state_t *state, int pos);
-
 size_t
 next_rune (state_t *state, int n)
 {
+    // i stole ts entirely from mew
     ssize_t i;
     for (i = state->cursor + n; i + n >= 0 && (state->current_command_string[i] & 0xc0) == 0x80; i += n)
         ;
@@ -107,8 +104,6 @@ xkb_handle_key (state_t *state, uint32_t keycode)
     xkb_t *xkb       = state->xkb;
     xkb_keysym_t sym = xkb_state_key_get_one_sym (xkb->state, keycode);
 
-    IN_MESSAGE ("(sym %d) (kc %u)", sym, keycode);
-
     char buf[8];
     switch (sym)
         {
@@ -131,6 +126,7 @@ xkb_handle_key (state_t *state, uint32_t keycode)
                     xkb->last_key         = utf;
                 }
         }
+    IN_MESSAGE ("(sym %d) (kc %u)", sym, keycode);
     INFO ("current command: %s, %lu, %zu", state->current_command_string, strlen (state->current_command_string),
           state->cursor);
 }

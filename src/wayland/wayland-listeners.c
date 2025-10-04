@@ -117,7 +117,6 @@ wl_keyboard_keymap_handler (void *userdata, struct wl_keyboard *keyboard, uint32
     munmap (format_map, size);
     close (fd);
 }
-
 void
 wl_handle_key (wlc_t *wlc, uint32_t keycode, bool release)
 {
@@ -126,7 +125,6 @@ wl_handle_key (wlc_t *wlc, uint32_t keycode, bool release)
     if (release)
         xkb_handle_key (wlc->state, keycode);
 }
-
 void
 wl_keyboard_enter_handler (void *userdata, struct wl_keyboard *keyboard, uint32_t serial, struct wl_surface *surface,
                            struct wl_array *keys)
