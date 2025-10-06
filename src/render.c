@@ -43,10 +43,10 @@ draw_square (render_context_t *context, uint32_t *surface_buf, uint32_t *input_b
     if (y + height > context->height)
         trim_buf (context, input_buf, stride, &width, &height, width, height - (y + height - context->height));
 
-    if (x < context->width && y < context->height)
-        surface_buf += context->width * y;
-    else
-        return;
+    // if (x < context->width && y < context->height)
+    //     surface_buf += context->width * y;
+    // else
+    //     return;
     for (int i = 0; i < height; ++i)
         for (int j = 0; j < width; ++j)
             surface_buf[(i * context->width) + j + x] = input_buf[(i * width) + j];
