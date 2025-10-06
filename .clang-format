@@ -7,4 +7,3 @@ AlignConsecutiveAssignments:
 AlignConsecutiveMacros: true
 IndentWidth: 4
 ColumnLimit: 120
-Language: C

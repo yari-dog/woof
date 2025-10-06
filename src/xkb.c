@@ -6,7 +6,6 @@
 #include <string.h>
 #include <time.h>
 #include <uchar.h>
-#include <xkbcommon/xkbcommon-keysyms.h>
 #include <xkbcommon/xkbcommon.h>
 #define DOUBLEKEYLIMIT 250 // in ms
 

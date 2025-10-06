@@ -12,8 +12,6 @@
 #include <sys/mman.h>
 #include <syscall.h>
 #include <unistd.h>
-#include <wayland-client-core.h>
-#include <wayland-client-protocol.h>
 #include <wayland-client.h>
 #define BUFFER_SCALE 4
 #define MARGIN       15
