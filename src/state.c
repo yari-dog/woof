@@ -1,9 +1,9 @@
 #include "state.h"
+#include "config.h"
 #include "render.h"
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
-#define INITIAL_COMMAND ":"
 
 state_t *
 init_state ()

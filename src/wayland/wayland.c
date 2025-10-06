@@ -1,5 +1,6 @@
 #include "wayland.h"
 #include "../../include/wlr-layer-shell.h"
+#include "../config.h"
 #include "../render.h"
 #include "../state.h"
 #include "../util.h"
@@ -13,8 +14,6 @@
 #include <syscall.h>
 #include <unistd.h>
 #include <wayland-client.h>
-#define BUFFER_SCALE 4
-#define MARGIN       15
 
 void wlc_set_title (wlc_t *wlc, char *title, int size);
 
@@ -36,7 +35,7 @@ wlc_init_buffer (wlc_t *wlc)
                                                // happen with the above line
     wlc->buffer = wl_shm_pool_create_buffer (wlc->shm_pool, 0, wlc->state->render_context->width,
                                              wlc->state->render_context->height, wlc->state->render_context->stride,
-                                             WL_SHM_FORMAT_ARGB8888);
+                                             COLOR_FORMAT);
     wl_shm_pool_destroy (wlc->shm_pool);
     close (fd);
 
@@ -99,7 +98,7 @@ wlc_make_surfaces (wlc_t *wlc)
     // wlr-layer-shell-unstable-v1
     wlc->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface (
         wlc->zwlr_layer_shell, wlc->surface, wlc->output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->state->title);
-    wlc_set_size (wlc, 800, 400);
+    wlc_set_size (wlc, WIDTH, HEIGHT);
     zwlr_layer_surface_v1_set_anchor (wlc->zwlr_layer_surface,
                                       ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
     zwlr_layer_surface_v1_set_exclusive_zone (wlc->zwlr_layer_surface, -1);
@@ -137,21 +136,11 @@ wlc_init ()
 }
 
 void
-wlc_keys_init (wlc_t *wlc)
-{
-}
-
-void
-wlc_seat_init (wlc_t *wlc)
-{
-}
-
-void
 wlc_start (state_t *state)
 {
     wlc_t *wlc = state->wlc;
     INFO ("wlc_init");
-    wlc_set_title (state->wlc, ":woof", sizeof (":woof"));
+    wlc_set_title (state->wlc, TITLE, sizeof (TITLE));
     // connect display
     wlc->display = wl_display_connect (NULL);
 

@@ -1,4 +1,5 @@
 #include "xkb.h"
+#include "config.h"
 #include "state.h"
 #include "util.h"
 #include <stdio.h>
@@ -7,7 +8,6 @@
 #include <time.h>
 #include <uchar.h>
 #include <xkbcommon/xkbcommon.h>
-#define DOUBLEKEYLIMIT 250 // in ms
 
 size_t
 next_rune (state_t *state, int n)

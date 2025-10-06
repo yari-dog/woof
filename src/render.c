@@ -1,4 +1,5 @@
 #include "render.h"
+#include "config.h"
 #include "state.h"
 #include "util.h"
 #include <stdint.h>
@@ -108,7 +109,7 @@ render_context_t *
 render_init (state_t *state)
 {
     render_context_t *context = calloc (1, sizeof (render_context_t));
-    context->color_depth      = 4; // WL_SHM_FORMAT_XRGB8888 = 32 bit = 4
+    context->color_depth      = COLOR_DEPTH;
 
     return context;
 }
