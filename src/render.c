@@ -12,11 +12,8 @@ trim_buf (render_context_t *context, uint32_t *buf, uint32_t stride, uint32_t *w
     trim_width  = MAX (0, trim_width);
     trim_height = MAX (0, trim_height);
 
-    int32_t trim_stride;
-    if (*width > 0 && trim_width > 0)
-        trim_stride = stride / *width * trim_width;
-    else
-        trim_stride = 0;
+    // this avoids a div/0 error
+    int32_t trim_stride = stride / (*width + !*width) * (trim_width + !trim_width);
     for (int i = 0; i < trim_height; ++i)
         memcpy (&buf[(i * trim_width)], &buf[(i * *width)], trim_stride);
 
@@ -97,7 +94,11 @@ render (render_context_t *context, uint32_t *surface_buf)
     draw_checkerboard (context, surface_buf, 0xFFEBDBB2, 0xFF282828, 80, 80, 0, 100);
     draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFEBDBB2, 80, 80, 100, 0);
     draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 740, 0);   // should half-draw
-    draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 750, 700); // shouldn't draw at all
+    draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 760, 700); // shouldn't draw at all
+    draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 860, 100); // shouldn't draw at all
+    draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 70, 360);  // shouldn't draw at all
+    draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 860, 700); // shouldn't draw at all
+    draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 760, 360); // shouldn't draw at all
     INFO ("rendered into buffer ");
 }
 
