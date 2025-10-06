@@ -1,8 +1,8 @@
 #ifndef STATE_H
 #define STATE_H
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 typedef struct state_t
 {
@@ -21,7 +21,6 @@ typedef struct state_t
     bool close;
 } state_t;
 
-
-state_t *init_state();
+state_t *init_state ();
 
 #endif

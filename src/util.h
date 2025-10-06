@@ -2,9 +2,10 @@
 #define UTIL_H
 
 #include <errno.h>
+#include <stdint.h>
+// needed for macros lmao
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <time.h>
 
@@ -26,8 +27,8 @@ int create_shm_file (int size);
 #define LOG_FMT(LOG_COLOR)         "(%s)" LOG_COLOR "  %s "
 #define NEWLINE                    "\n"
 
-#define NULL_TERM_SIZE sizeof('\0')
-#define BUFFSIZE 128 * sizeof (char)
+#define NULL_TERM_SIZE sizeof ('\0')
+#define BUFFSIZE       128 * sizeof (char)
 
 static inline char *
 timenow ()
@@ -59,7 +60,9 @@ timenow ()
 #define IN_MESSAGE(message, args...)                                                                                   \
     PRINTFUNCTION (LOG_FMT (ANSI_COLOR_CYAN) message ANSI_COLOR_RESET NEWLINE, LOG_ARGS ("<-"), ##args)
 
-static void noop() {
+static void
+noop ()
+{
     /*
      * woof :3
      */

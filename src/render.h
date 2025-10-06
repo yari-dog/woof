@@ -4,7 +4,8 @@
 #include <stdint.h>
 
 #define COLORDEPTHSLUDGE 4
-typedef struct render_context_t {
+typedef struct render_context_t
+{
     uint32_t width;
     uint32_t height;
     uint32_t stride;

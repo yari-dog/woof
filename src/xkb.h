@@ -1,10 +1,9 @@
 #ifndef XKB_H
 #define XKB_H
 #include "state.h"
-#include <xkbcommon/xkbcommon.h>
 #include <stdint.h>
 #include <uchar.h>
-#include <time.h>
+#include <xkbcommon/xkbcommon.h>
 
 typedef struct xkb_t
 {

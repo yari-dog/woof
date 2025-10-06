@@ -17,7 +17,7 @@ wlr-layer-shell:
 	wayland-scanner client-header protocols/wlr-layer-shell-unstable-v1.xml include/wlr-layer-shell.h
 	wayland-scanner private-code protocols/wlr-layer-shell-unstable-v1.xml include/wlr-layer-shell.c
 
-run: main
+run: xdg-shell wlr-layer-shell main
 	build/main
 
 clean:
