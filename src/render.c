@@ -6,23 +6,47 @@
 #include <wayland-client-protocol.h>
 
 void
+trim_buf (render_context_t *context, uint32_t *buf, uint32_t stride, uint32_t *width, uint32_t *height,
+          int32_t trim_width, int32_t trim_height)
+{
+    if (trim_height < 0 || trim_width < 0)
+        {
+            *width  = 0;
+            *height = 0;
+            return;
+        }
+
+    trim_width  = MAX (0, trim_width);
+    trim_height = MAX (0, trim_height);
+
+    int32_t trim_stride;
+    if (*width > 0 && trim_width > 0)
+        trim_stride = stride / *width * trim_width;
+    else
+        trim_stride = 0;
+    for (int i = 0; i < trim_height; ++i)
+        memcpy (&buf[(i * trim_width)], &buf[(i * *width)], trim_stride);
+
+    *width  = trim_width;
+    *height = trim_height;
+}
+
+void
 draw_square (render_context_t *context, uint32_t *surface_buf, uint32_t *input_buf, uint32_t stride, uint32_t width,
              uint32_t height, uint32_t x, uint32_t y)
 {
     // will it go off the edge ?
+    // if so, trim it up :3
     if (x + width > context->width)
-        {
-            INFO ("too fuckin wide mate x%i w%i sw%i", x, width, context->width);
-            return;
-        }
+        trim_buf (context, input_buf, stride, &width, &height, width - (width + x - context->width), height);
 
     if (y + height > context->height)
-        {
-            INFO ("too fuckin tall mate y%i h%i sh%i", y, height, context->height);
-            return;
-        }
+        trim_buf (context, input_buf, stride, &width, &height, width, height - (y + height - context->height));
 
-    surface_buf += context->width * y;
+    if (x < context->width && y < context->height)
+        surface_buf += context->width * y;
+    else
+        return;
     for (int i = 0; i < height; ++i)
         for (int j = 0; j < width; ++j)
             surface_buf[(i * context->width) + j + x] = input_buf[(i * width) + j];
@@ -38,15 +62,13 @@ draw_checkerboard (render_context_t *context, uint32_t *surface_buffer, uint32_t
     uint32_t *temp_buf = malloc (stride * height);
 
     for (int i = 0; i < height; ++i)
-        {
-            for (int j = 0; j < width; ++j)
-                {
-                    if ((i + j / 8 * 8) % 16 < 8)
-                        temp_buf[i * width + j] = color;
-                    else
-                        temp_buf[i * width + j] = bg;
-                }
-        }
+        for (int j = 0; j < width; ++j)
+            {
+                if ((i + j / 8 * 8) % 16 < 8)
+                    temp_buf[i * width + j] = color;
+                else
+                    temp_buf[i * width + j] = bg;
+            }
 
     // draw that to the surface buffer
     draw_square (context, surface_buffer, temp_buf, stride, width, height, x, y);
@@ -55,7 +77,7 @@ draw_checkerboard (render_context_t *context, uint32_t *surface_buffer, uint32_t
 
 // TODO: make this work
 void
-draw_color_square (render_context_t *context, uint32_t *surface_buf, int32_t color, uint32_t width, uint32_t height,
+draw_color_square (render_context_t *context, uint32_t *surface_buf, uint32_t color, uint32_t width, uint32_t height,
                    uint32_t x, uint32_t y)
 {
     uint32_t stride    = context->color_depth * width;
@@ -84,6 +106,8 @@ render (render_context_t *context, uint32_t *surface_buf)
     draw_color_square (context, surface_buf, 0xFFEBDBB2, 80, 80, 100, 100);
     draw_checkerboard (context, surface_buf, 0xFFEBDBB2, 0xFF282828, 80, 80, 0, 100);
     draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFEBDBB2, 80, 80, 100, 0);
+    draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 740, 0);   // should half-draw
+    draw_checkerboard (context, surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 750, 700); // shouldn't draw at all
     INFO ("rendered into buffer ");
 }
 

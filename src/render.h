@@ -5,10 +5,10 @@
 
 #define COLORDEPTHSLUDGE 4
 typedef struct render_context_t {
-    int32_t width;
-    int32_t height;
-    int32_t stride;
-    int32_t color_depth;
+    uint32_t width;
+    uint32_t height;
+    uint32_t stride;
+    uint8_t color_depth;
     state_t *state;
 } render_context_t;
 
