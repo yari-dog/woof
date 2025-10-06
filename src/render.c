@@ -9,13 +9,6 @@ void
 trim_buf (render_context_t *context, uint32_t *buf, uint32_t stride, uint32_t *width, uint32_t *height,
           int32_t trim_width, int32_t trim_height)
 {
-    if (trim_height < 0 || trim_width < 0)
-        {
-            *width  = 0;
-            *height = 0;
-            return;
-        }
-
     trim_width  = MAX (0, trim_width);
     trim_height = MAX (0, trim_height);
 
