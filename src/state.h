@@ -22,6 +22,7 @@ typedef struct state_t
     char *current_command_string;
     int32_t ccs_buffsize;
     bool close;
+    bool update;
 } state_t;
 
 state_t *init_state ();

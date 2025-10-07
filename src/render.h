@@ -21,7 +21,7 @@ typedef struct buffer_t
     uint32_t height;
     int32_t x;
     int32_t y;
-    render_context_t *context;
+    render_context_t *render_context;
 } buffer_t;
 
 void render (render_context_t *context);

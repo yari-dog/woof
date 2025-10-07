@@ -7,13 +7,13 @@
 
 #define INIT_BUF(RENDER_CONTEXT, T_WIDTH, T_HEIGHT, T_X, T_Y)                                                          \
     {                                                                                                                  \
-        .width   = T_WIDTH,                                                                                            \
-        .height  = T_HEIGHT,                                                                                           \
-        .stride  = RENDER_CONTEXT->color_depth * T_WIDTH,                                                              \
-        .x       = T_X,                                                                                                \
-        .y       = T_Y,                                                                                                \
-        .buffer  = calloc (1, T_HEIGHT * RENDER_CONTEXT->color_depth * T_WIDTH),                                       \
-        .context = RENDER_CONTEXT,                                                                                     \
+        .width          = T_WIDTH,                                                                                     \
+        .height         = T_HEIGHT,                                                                                    \
+        .stride         = RENDER_CONTEXT->color_depth * T_WIDTH,                                                       \
+        .x              = T_X,                                                                                         \
+        .y              = T_Y,                                                                                         \
+        .buffer         = calloc (1, T_HEIGHT * RENDER_CONTEXT->color_depth * T_WIDTH),                                \
+        .render_context = RENDER_CONTEXT,                                                                              \
     }
 
 void draw_borders (buffer_t *context);
@@ -34,7 +34,7 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
 
     // this avoids a div/0 error
     uint32_t stride     = context->stride;
-    int32_t trim_stride = context->context->color_depth * trim_width;
+    int32_t trim_stride = context->render_context->color_depth * trim_width;
 
     uint32_t *temp_buf = calloc (1, trim_height * trim_stride);
     for (int i = 0; i < trim_height; ++i)
@@ -73,7 +73,7 @@ void
 draw_checkerboard (buffer_t *context, uint32_t bg, uint32_t color, uint32_t width, uint32_t height, int32_t x,
                    int32_t y)
 {
-    buffer_t temp_buf = INIT_BUF (context->context, width, height, x, y);
+    buffer_t temp_buf = INIT_BUF (context->render_context, width, height, x, y);
     for (int i = 0; i < height; ++i)
         for (int j = 0; j < width; ++j)
             {
@@ -91,7 +91,7 @@ draw_checkerboard (buffer_t *context, uint32_t bg, uint32_t color, uint32_t widt
 void
 draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t height, int32_t x, int32_t y)
 {
-    buffer_t temp_buf = INIT_BUF (context->context, width, height, x, y);
+    buffer_t temp_buf = INIT_BUF (context->render_context, width, height, x, y);
 
     for (int i = 0; i < width * height; i++)
         temp_buf.buffer[i] = color;
@@ -109,16 +109,32 @@ draw_main_surface (render_context_t *context)
 }
 
 void
+draw_command_str (buffer_t *context)
+{
+    char *str = context->render_context->state->current_command_string;
+    int cur   = context->render_context->state->cursor;
+    for (int i = 0; i < strlen (str); i++)
+        draw_color_square (context, (int)cur - 1 == i ? COLOR_BG : COLOR_FG, COMMAND_HEIGHT, COMMAND_HEIGHT,
+                           PADDING + (i * COMMAND_HEIGHT), 0);
+}
+
+void
 draw_input (buffer_t *context)
 {
-    draw_color_square (context, COMMAND_BG, WIDTH, COMMAND_HEIGHT, 0, HEIGHT - COMMAND_HEIGHT);
+    buffer_t temp_buf = INIT_BUF (context->render_context, WIDTH, COMMAND_HEIGHT, 0, HEIGHT - COMMAND_HEIGHT);
+    draw_color_square (&temp_buf, COMMAND_BG, temp_buf.width, temp_buf.height, 0, 0);
     // TODO: command draw
+
+    draw_command_str (&temp_buf);
+
+    draw_to_buffer (context, &temp_buf);
+    free (temp_buf.buffer);
 }
 
 void
 draw_results (buffer_t *context)
 {
-    buffer_t temp_buf = INIT_BUF (context->context, WIDTH, (HEIGHT - PADDING - COMMAND_HEIGHT), 0, 0);
+    buffer_t temp_buf = INIT_BUF (context->render_context, WIDTH, (HEIGHT - PADDING - COMMAND_HEIGHT), 0, 0);
     draw_color_square (&temp_buf, COLOR_BG, temp_buf.width, temp_buf.height, 0, 0);
 
     draw_borders (&temp_buf);
@@ -159,19 +175,21 @@ render (render_context_t *context)
     draw_checkerboard (context->surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 860, 700); // shouldn't draw at all
     draw_checkerboard (context->surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 760, 360); // should half-draw
 #endif
+    context->state->update = false;
     INFO ("rendered into buffer ");
 }
 
 render_context_t *
 render_init (state_t *state)
 {
-    render_context_t *context = calloc (1, sizeof (render_context_t));
-    buffer_t *surface_buf     = calloc (1, sizeof (buffer_t));
-    context->color_depth      = COLOR_DEPTH;
-    context->surface_buf      = surface_buf;
-    surface_buf->height       = HEIGHT;
-    surface_buf->width        = WIDTH;
-    surface_buf->context      = context;
+    render_context_t *context   = calloc (1, sizeof (render_context_t));
+    buffer_t *surface_buf       = calloc (1, sizeof (buffer_t));
+    context->state              = state;
+    context->color_depth        = COLOR_DEPTH;
+    context->surface_buf        = surface_buf;
+    surface_buf->height         = HEIGHT;
+    surface_buf->width          = WIDTH;
+    surface_buf->render_context = context;
 
     return context;
 }

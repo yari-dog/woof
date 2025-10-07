@@ -186,10 +186,11 @@ wlc_disconnect (state_t *state)
 void
 wlc_main_loop (state_t *state)
 {
-    wlc_t *wlc = state->wlc;
-    wl_display_flush (wlc->display);
+    if (state->update)
+        wlc_set_surface (state->wlc);
+    wl_display_flush (state->wlc->display);
 
-    if (!wl_display_dispatch_pending (wlc->display))
-        if (wl_display_dispatch (wlc->display) < 0)
+    if (!wl_display_dispatch_pending (state->wlc->display))
+        if (wl_display_dispatch (state->wlc->display) < 0)
             die ("display dispatch failed :(");
 }

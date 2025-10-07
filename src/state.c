@@ -15,6 +15,7 @@ init_state ()
     strcpy (state->current_command_string, INITIAL_COMMAND);
     state->cursor         = strlen (state->current_command_string);
     state->render_context = render_init (state);
+    state->update         = false;
 
     return state;
 }

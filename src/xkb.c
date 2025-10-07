@@ -23,6 +23,17 @@ next_rune (state_t *state, int n)
 }
 
 void
+move_cursor (state_t *state, size_t n)
+{
+    if (state->cursor + n <= 0)
+        n = state->cursor - 1;
+    if (state->cursor + n > strlen (state->current_command_string))
+        n = strlen (state->current_command_string) - state->cursor;
+
+    state->cursor += n;
+}
+
+void
 expand_command_str_buf (state_t *state, ssize_t n)
 {
 
@@ -68,7 +79,7 @@ insert (state_t *state, char *text, ssize_t n)
         memcpy (&state->current_command_string[state->cursor], text, n);
 
     // update cursor
-    state->cursor += n;
+    move_cursor (state, n);
 }
 
 void
@@ -118,12 +129,21 @@ xkb_handle_key (state_t *state, uint32_t keycode)
         case XKB_KEY_Return:
             state->close = true;
             run (state);
+            break;
+        case XKB_KEY_Left:
+            move_cursor (state, -1);
+            break;
+        case XKB_KEY_Right:
+            move_cursor (state, 1);
+            break;
         default:
             if (xkb_keysym_to_utf8 (sym, buf, 8))
                 xkb_handle_quick_double_key (state, current_time, buf);
         }
     xkb->time_of_last_key = current_time;
     xkb->last_key         = buf[0];
+
+    state->update = true;
 
     IN_MESSAGE ("(sym %d) (kc %u)", sym, keycode);
     INFO ("current command: %s, %lu, %zu", state->current_command_string, strlen (state->current_command_string),
