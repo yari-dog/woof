@@ -20,51 +20,57 @@ void wlc_set_title (wlc_t *wlc, char *title, int size);
 void
 wlc_init_buffer (wlc_t *wlc)
 {
-    INFO ("initing buffer %u %u", wlc->state->render_context->width, wlc->state->render_context->height);
-    int size = wlc->state->render_context->height * wlc->state->render_context->stride;
+    render_context_t *render_context = wlc->state->render_context;
+    buffer_t *surface_buf            = render_context->surface_buf;
+    INFO ("initing buffer %u %u", surface_buf->width, surface_buf->height);
+
+    int size = surface_buf->height * surface_buf->stride;
 
     // make the file
     int fd = create_shm_file (size);
 
-    wlc->buffer_data = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (wlc->buffer_data == MAP_FAILED)
+    surface_buf->buffer = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (surface_buf->buffer == MAP_FAILED)
         die ("fucked up mapping the shmm :\\ sowwy");
 
     wlc->shm_pool = wl_shm_create_pool (wlc->shm, fd,
                                         size); // TODO: is this a race condition waiting to
                                                // happen with the above line
-    wlc->buffer = wl_shm_pool_create_buffer (wlc->shm_pool, 0, wlc->state->render_context->width,
-                                             wlc->state->render_context->height, wlc->state->render_context->stride,
-                                             COLOR_FORMAT);
+    wlc->buffer = wl_shm_pool_create_buffer (wlc->shm_pool, 0, surface_buf->width, surface_buf->height,
+                                             surface_buf->stride, COLOR_FORMAT);
     wl_shm_pool_destroy (wlc->shm_pool);
     close (fd);
 
-    INFO ("%s buffed size: %ux%u", wlc->state->title, wlc->state->render_context->width,
-          wlc->state->render_context->height);
+    INFO ("%s buffed size: %ux%u", wlc->state->title, surface_buf->width, surface_buf->height);
 }
 
 void
 wlc_wipe_buffer (wlc_t *wlc)
 {
-    if (wlc->buffer_data)
+    render_context_t *render_context = wlc->state->render_context;
+    buffer_t *surface_buf            = render_context->surface_buf;
+
+    if (surface_buf->buffer)
         {
             INFO ("unmapping buffer");
-            munmap (wlc->buffer_data, wlc->state->render_context->height * wlc->state->render_context->stride);
+            munmap (surface_buf->buffer, surface_buf->height * surface_buf->stride);
         }
 }
 
 void
 wlc_set_surface (wlc_t *wlc)
 {
+    render_context_t *render_context = wlc->state->render_context;
+    buffer_t *surface_buf            = render_context->surface_buf;
+
     wlc_wipe_buffer (wlc);
     wlc_init_buffer (wlc);
 
-    render (wlc->state->render_context, wlc->buffer_data);
+    render (render_context);
 
     wl_surface_set_buffer_scale (wlc->surface, 1);
     wl_surface_attach (wlc->surface, wlc->buffer, 0, 0);
-    wl_surface_damage_buffer (wlc->surface, 0, 0, wlc->state->render_context->width,
-                              wlc->state->render_context->height);
+    wl_surface_damage_buffer (wlc->surface, 0, 0, surface_buf->width, surface_buf->height);
     wl_surface_commit (wlc->surface);
     INFO ("frame rendered :o");
 }
@@ -73,12 +79,16 @@ void
 wlc_set_size (wlc_t *wlc, uint32_t width, uint32_t height)
 {
     render_context_t *render_context = wlc->state->render_context;
-    render_context->width            = width;
-    render_context->height           = height;
-    render_context->stride           = width * render_context->color_depth; // TODO: change from hardcoded sludge
+    buffer_t *surface_buf            = render_context->surface_buf;
+
+    if (width)
+        surface_buf->width = width;
+    if (height)
+        surface_buf->height = height;
+    surface_buf->stride = surface_buf->width * render_context->color_depth; // TODO: change from hardcoded sludge
                                                                             // if (wlc->zwlr_layer_surface)
-    zwlr_layer_surface_v1_set_size (wlc->zwlr_layer_surface, render_context->width, render_context->height);
-    INFO ("%s resized size: %ux%u", wlc->state->title, render_context->width, render_context->height);
+    zwlr_layer_surface_v1_set_size (wlc->zwlr_layer_surface, surface_buf->width, surface_buf->height);
+    INFO ("%s resized size: %ux%u", wlc->state->title, surface_buf->width, surface_buf->height);
 }
 
 void
@@ -98,7 +108,7 @@ wlc_make_surfaces (wlc_t *wlc)
     // wlr-layer-shell-unstable-v1
     wlc->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface (
         wlc->zwlr_layer_shell, wlc->surface, wlc->output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->state->title);
-    wlc_set_size (wlc, WIDTH, HEIGHT);
+    wlc_set_size (wlc, 0, 0);
     zwlr_layer_surface_v1_set_anchor (wlc->zwlr_layer_surface,
                                       ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
     zwlr_layer_surface_v1_set_exclusive_zone (wlc->zwlr_layer_surface, -1);

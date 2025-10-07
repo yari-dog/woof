@@ -1,5 +1,4 @@
 #include "state.h"
-#include "config.h"
 #include "render.h"
 #include "util.h"
 #include <stdlib.h>

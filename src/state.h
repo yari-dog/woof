@@ -1,8 +1,11 @@
 #ifndef STATE_H
 #define STATE_H
+#include "config.h"
+#include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 typedef struct state_t
 {

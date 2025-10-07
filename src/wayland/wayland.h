@@ -18,9 +18,8 @@ typedef struct wlc_t
     struct wl_shm_pool *shm_pool;
     struct wl_output *output;
     struct wl_buffer *buffer;
-    uint32_t *buffer_data;
 
-    // windowing 
+    // windowing
     struct wl_surface *surface;
     struct wl_compositor *compositor;
     struct zwlr_layer_shell_v1 *zwlr_layer_shell;

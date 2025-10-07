@@ -56,11 +56,10 @@ zwlr_layer_surface_config_handler (void *userdata, struct zwlr_layer_surface_v1 
     IN_MESSAGE ("zwlr_layer_surface_configure: s(%i) %ix%i", serial, width, height);
     wlc_t *wlc = (struct wlc_t *)userdata;
 
-    if (!wlc->configured
-        || (width != wlc->state->render_context->width || height != wlc->state->render_context->height))
-        {
-            wlc_set_size (wlc, width, height);
-        }
+    if (wlc->configured
+        || (width != wlc->state->render_context->surface_buf->width
+            || height != wlc->state->render_context->surface_buf->height))
+        wlc_set_size (wlc, width, height);
 
     zwlr_layer_surface_v1_ack_configure (surface, serial);
 
