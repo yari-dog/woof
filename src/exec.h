@@ -3,7 +3,6 @@
 
 #include "state.h"
 #include <stdint.h>
-uint8_t exec_cmd (char *cmd);
 void run (state_t *state);
 
 #endif
