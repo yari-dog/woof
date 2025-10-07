@@ -19,6 +19,8 @@ typedef struct buffer_t
     uint32_t *buffer;
     uint32_t width;
     uint32_t height;
+    int32_t x;
+    int32_t y;
     render_context_t *context;
 } buffer_t;
 
