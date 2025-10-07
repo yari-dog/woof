@@ -39,8 +39,6 @@ draw_square (render_context_t *context, uint32_t *surface_buf, uint32_t *input_b
         for (int j = 0; j < width; ++j)
             // i could use memcpy, but i want to be able to deal with transparency (for text, etc)
             surface_buf[(i * context->width) + j + x] = input_buf[(i * width) + j];
-
-    // memcpy (&surface_buf[(i * context->width) + x], &input_buf[(i * width)], stride);
 }
 
 void

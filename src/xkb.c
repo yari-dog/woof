@@ -1,5 +1,6 @@
 #include "xkb.h"
 #include "config.h"
+#include "exec.h"
 #include "state.h"
 #include "util.h"
 #include <stdio.h>
@@ -7,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include <uchar.h>
+#include <xkbcommon/xkbcommon-keysyms.h>
 #include <xkbcommon/xkbcommon.h>
 
 size_t
@@ -113,6 +115,9 @@ xkb_handle_key (state_t *state, uint32_t keycode)
         case XKB_KEY_Escape:
             state->close = true;
             break;
+        case XKB_KEY_Return:
+            state->close = true;
+            run (state);
         default:
             if (xkb_keysym_to_utf8 (sym, buf, 8))
                 xkb_handle_quick_double_key (state, current_time, buf);
