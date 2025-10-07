@@ -10,8 +10,14 @@ exec_cmd (char *cmd)
 {
     char *argv[] = { "/bin/sh", "-c", cmd, NULL };
 
-    execv (argv[0], argv);
-    die (":3");
+    switch (fork ())
+        {
+        case -1:
+            die ("fork:");
+        case 0:
+            execv (argv[0], argv);
+            die ("bye bye :3");
+        }
     return 0;
 }
 
