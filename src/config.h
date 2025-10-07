@@ -11,9 +11,10 @@
 #define HEIGHT         400
 #define MARGIN         15
 #define COMMAND_HEIGHT 32
+#define COMMAND_BG     0xFF504945
 #define PADDING        15
 #define BORDER_WIDTH   2
-#define BORDER_COLOR   0xFFEBDBB2
+#define BORDER_COLOR   0xFF3C3836
 
 #define INITIAL_COMMAND ":"
 

@@ -111,7 +111,7 @@ draw_main_surface (render_context_t *context)
 void
 draw_input (buffer_t *context)
 {
-    draw_color_square (context, COLOR_BG, WIDTH, COMMAND_HEIGHT, 0, HEIGHT - COMMAND_HEIGHT);
+    draw_color_square (context, COMMAND_BG, WIDTH, COMMAND_HEIGHT, 0, HEIGHT - COMMAND_HEIGHT);
     // TODO: command draw
 }
 
