@@ -63,9 +63,6 @@ wlc_set_surface (wlc_t *wlc)
     render_context_t *render_context = wlc->state->render_context;
     buffer_t *surface_buf            = render_context->surface_buf;
 
-    wlc_wipe_buffer (wlc);
-    wlc_init_buffer (wlc);
-
     render (render_context);
 
     wl_surface_set_buffer_scale (wlc->surface, 1);
@@ -95,6 +92,9 @@ void
 wlc_resize_handler (wlc_t *wlc, uint32_t width, uint32_t height)
 {
     INFO ("resizing :3");
+    wlc_wipe_buffer (wlc);
+    wlc_init_buffer (wlc);
+
     wlc_set_surface (wlc);
 }
 
