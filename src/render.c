@@ -196,6 +196,12 @@ draw_character (buffer_t *context, SFT_UChar chr, int32_t *x, int32_t *y)
     *x += mtx.advanceWidth;
     draw_to_buffer (context, &temp_buf);
 }
+
+void
+draw_cur (buffer_t *context, int x, int y)
+{
+    draw_color_square (context, 0xFFEBDBB2, 2, 18, x, y);
+}
 void
 draw_command_str (buffer_t *context)
 {
@@ -206,12 +212,15 @@ draw_command_str (buffer_t *context)
 
     int32_t x, y;
 
-    x  = PADDING;
-    y  = context->height;
-    y /= 4;
+    x = PADDING;
+    y = (context->height - 18) / 2;
 
     for (int i = 0; i < strlen (str); i++)
-        draw_character (context, str[i], &x, &y);
+        {
+            draw_character (context, str[i], &x, &y);
+            if (i == (int)cur - 1)
+                draw_cur (context, x, y);
+        }
     //     draw_color_square (context, (int)cur - 1 == i ? COLOR_BG : COLOR_FG, COMMAND_HEIGHT, COMMAND_HEIGHT,
     //                        PADDING + (i * COMMAND_HEIGHT), 0);
 }

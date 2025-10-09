@@ -65,7 +65,7 @@ wlc_set_surface (wlc_t *wlc)
 
     render (render_context);
 
-    wl_surface_set_buffer_scale (wlc->surface, 1);
+    // wl_surface_set_buffer_scale (wlc->surface, 1);
     wl_surface_attach (wlc->surface, wlc->buffer, 0, 0);
     wl_surface_damage_buffer (wlc->surface, 0, 0, surface_buf->width, surface_buf->height);
     wl_surface_commit (wlc->surface);
