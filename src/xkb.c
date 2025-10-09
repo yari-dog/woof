@@ -104,7 +104,10 @@ xkb_handle_quick_double_key (state_t *state, clock_t current_time, char *buf)
         has_binding = true;
 
     if (has_binding)
-        insert (state, NULL, next_rune (state, -1) - state->cursor);
+        {
+            insert (state, NULL, next_rune (state, -1) - state->cursor);
+            // TODO: stop last key spam  to delete characters
+        }
     else
         insert (state, buf, strnlen (buf, 8)); // return the result of void (i dont want to have to add braces)
 }
