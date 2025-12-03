@@ -49,9 +49,7 @@ blend (buffer_t *context, buffer_t *input_buf)
                     // if opaque
                     // is the same as if (fg >> 24 == 0xFF)
                     if (*fg >= 0xFF000000)
-                        {
-                            continue;
-                        }
+                        continue;
 
                     bg_a = (*bg & 0xFF000000) >> 24;
                     fg_a = (*fg & 0xFF000000) >> 24;
