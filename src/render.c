@@ -204,6 +204,7 @@ draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t width, uint3
 
     char *buf = &string_buf[(*y + (height / 2 + mtx.yOffset)) * width];
 
+    // this placement does not account for overflowing the visual bounds of the input buffer
     for (int i = 0; i < img.height; ++i)
         memcpy (&buf[(i * width) + *x], &pixels[i * img.width], img.width);
 
