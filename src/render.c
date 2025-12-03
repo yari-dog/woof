@@ -2,7 +2,9 @@
 #include "config.h"
 #include "state.h"
 #include "util.h"
+#include <fontconfig/fontconfig.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -287,6 +289,43 @@ render (render_context_t *context)
     INFO ("rendered into buffer ");
 }
 
+void
+get_font (SFT *sft)
+{
+    sft->xScale = 18;
+    sft->yScale = 18;
+    sft->flags  = SFT_DOWNWARD_Y;
+
+    // get font file dir
+    FcConfig *config = FcInitLoadConfigAndFonts ();
+    // not working rn ??
+    FcPattern *pat = FcNameParse ((const FcChar8 *)("Iosevka Term J Nerd"));
+    FcConfigSubstitute (config, pat, FcMatchPattern);
+    FcDefaultSubstitute (pat);
+
+    FcResult res;
+    FcPattern *font = FcFontMatch (config, pat, &res);
+
+    char fontFile[256];
+
+    if (font)
+        {
+            FcChar8 *file = NULL;
+            if (FcPatternGetString (font, FC_FILE, 0, &file) == FcResultMatch)
+                sprintf (fontFile, "%s", (char *)file);
+            FcPatternDestroy (font);
+        }
+    FcPatternDestroy (pat);
+
+    INFO ("found font: %s", fontFile);
+
+    sft->font = sft_loadfile (fontFile);
+    // sft->font = sft_loadfile ("/home/yari/dev/woof/src/FiraGO-Regular.ttf");
+
+    if (sft->font == NULL)
+        die ("font failed to load :O");
+}
+
 render_context_t *
 render_init (state_t *state)
 {
@@ -304,15 +343,7 @@ render_init (state_t *state)
     // font shit
     SFT *sft = calloc (1, sizeof (SFT));
 
-    sft->xScale = 18;
-    sft->yScale = 18;
-    sft->flags  = SFT_DOWNWARD_Y;
-
-    sft->font = sft_loadfile ("/usr/share/fonts/TTF/IosevkaTermNerdFontMono-Regular.ttf");
-    // sft->font = sft_loadfile ("/home/yari/dev/woof/src/FiraGO-Regular.ttf");
-
-    if (sft->font == NULL)
-        die ("font failed to load :O");
+    get_font (sft);
 
     context->sft = sft;
 
