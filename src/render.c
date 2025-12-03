@@ -23,42 +23,65 @@
     for (int i = 0; i < T_HEIGHT; ++i)                                                                                 \
         memcpy (&T_NAME.buffer[(i * T_WIDTH)], &CONTEXT->buffer[(i * CONTEXT->width) + T_X], T_NAME.stride);
 
+bool r_char = false;
 void draw_borders (buffer_t *context);
 
-uint32_t
-blend (uint32_t bg, uint32_t fg)
+void
+blend (buffer_t *context, buffer_t *input_buf)
 {
-    if (fg >> 24 == 0xFF)
-        return fg;
 
-    uint32_t blend;
-
+    uint32_t *fg, *bg;
     uint32_t bg_a, bg_r, bg_g, bg_b;
     uint32_t fg_a, fg_r, fg_g, fg_b;
     uint32_t b_a, b_r, b_g, b_b;
 
-    bg_a = (bg & 0xFF000000) >> 24;
-    fg_a = (fg & 0xFF000000) >> 24;
-    b_a  = fg_a + (bg_a * (0xFF - fg_a) / 0xFF);
+    uint32_t *buf  = context->buffer;
+    buf           += (context->width * input_buf->y) + input_buf->x;
 
-    if (b_a <= 0x0)
-        return 0x0;
+    uint32_t *input = input_buf->buffer;
 
-    bg_r = (bg & 0xFF0000) >> 16;
-    bg_g = (bg & 0xFF00) >> 8;
-    bg_b = (bg & 0xFF);
+    for (int i = 0; i < input_buf->height; ++i)
+        {
+            fg = input;
+            bg = buf;
+            for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
+                {
+                    // if opaque
+                    // is the same as if (fg >> 24 == 0xFF)
+                    if (*fg >= 0xFF000000)
+                        {
+                            continue;
+                        }
 
-    fg_r = (fg & 0xFF0000) >> 16;
-    fg_g = (fg & 0xFF00) >> 8;
-    fg_b = (fg & 0xFF);
+                    bg_a = (*bg & 0xFF000000) >> 24;
+                    fg_a = (*fg & 0xFF000000) >> 24;
+                    b_a  = fg_a + (bg_a * (0xFF - fg_a) / 0xFF);
 
-    b_r = ((fg_r * fg_a + bg_r * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 16;
-    b_g = ((fg_g * fg_a + bg_g * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 8;
-    b_b = ((fg_b * fg_a + bg_b * bg_a * (0xFF - fg_a) / 0xFF) / b_a);
-    b_a = b_a << 24;
+                    if (!b_a)
+                        {
+                            input[j] = 0x0;
+                            continue;
+                        }
 
-    blend = b_a | b_r | b_g | b_b;
-    return blend;
+                    bg_r = (*bg & 0xFF0000) >> 16;
+                    bg_g = (*bg & 0xFF00) >> 8;
+                    bg_b = (*bg & 0xFF);
+
+                    fg_r = (*fg & 0xFF0000) >> 16;
+                    fg_g = (*fg & 0xFF00) >> 8;
+                    fg_b = (*fg & 0xFF);
+
+                    b_r = ((fg_r * fg_a + bg_r * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 16;
+                    b_g = ((fg_g * fg_a + bg_g * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 8;
+                    b_b = ((fg_b * fg_a + bg_b * bg_a * (0xFF - fg_a) / 0xFF) / b_a);
+                    b_a = b_a << 24;
+
+                    input[j] = b_a | b_r | b_g | b_b;
+                }
+            memcpy (buf, input, input_buf->stride);
+            buf   += context->width;
+            input += input_buf->width;
+        }
 }
 
 // TODO: make this work with negative positions ? idk.
@@ -100,20 +123,7 @@ draw_to_buffer (buffer_t *context, buffer_t *input_buf)
     if (input_buf->height == 0 || input_buf->height == 0)
         return;
 
-    uint32_t blended_color;
-    uint32_t *buf  = context->buffer;
-    buf           += context->width * input_buf->y;
-    int count      = 0;
-    for (int i = 0; i < input_buf->height; ++i)
-        for (int j = 0; j < input_buf->width; ++j)
-            {
-                // if (input_buf->buffer[(i * input_buf->width) + j] != 0x0)
-                // buf[(i * context->width) + j + input_buf->x] = input_buf->buffer[(i * input_buf->width) + j];
-                blended_color = blend (buf[(i * context->width) + j + input_buf->x],
-                                       input_buf->buffer[(i * input_buf->width) + j]);
-
-                buf[(i * context->width) + j + input_buf->x] = blended_color;
-            }
+    blend (context, input_buf);
 }
 
 void
@@ -166,14 +176,21 @@ font_mask (char chr)
 }
 
 void
-draw_character (buffer_t *context, SFT_UChar chr, int32_t *x, int32_t *y)
+draw_cur (buffer_t *context, int x, int y)
+{
+    draw_color_square (context, 0xFFEBDBB2, 2, 18, x, y);
+    // could simply invert the buffer colors with some sorta bit masking ?
+}
+
+void
+draw_character (SFT *sft, char *string_buff, SFT_UChar chr, uint32_t width, uint32_t height, int32_t *x, int32_t *y)
 {
     SFT_Glyph gid;
-    if (sft_lookup (context->render_context->sft, chr, &gid) < 0)
+    if (sft_lookup (sft, chr, &gid) < 0)
         die ("missing glyph owo");
 
     SFT_GMetrics mtx;
-    if (sft_gmetrics (context->render_context->sft, gid, &mtx) < 0)
+    if (sft_gmetrics (sft, gid, &mtx) < 0)
         die ("bad glyph metrics");
 
     SFT_Image img = {
@@ -184,48 +201,52 @@ draw_character (buffer_t *context, SFT_UChar chr, int32_t *x, int32_t *y)
     char pixels[img.width * img.height];
     img.pixels = pixels;
 
-    if (sft_render (context->render_context->sft, gid, img) < 0)
+    if (sft_render (sft, gid, img) < 0)
         die ("failed to render glyph :o");
 
     *x += mtx.leftSideBearing;
 
-    buffer_t temp_buf
-        = INIT_BUF (context, img.width, img.height, *x, *y + (context->height / 2 + mtx.yOffset), temp_buf);
+    char *buff = &string_buff[(*y + (height / 2 + mtx.yOffset)) * width];
 
-    for (int i = 0; i < img.width * img.height; i++)
-        temp_buf.buffer[i] = font_mask (pixels[i]);
+    for (int i = 0; i < img.height; ++i)
+        memcpy (&buff[(i * width) + *x], &pixels[i * img.width], img.width);
 
     *x += mtx.advanceWidth;
-    draw_to_buffer (context, &temp_buf);
 }
 
 void
-draw_cur (buffer_t *context, int x, int y)
+draw_str (buffer_t *context, char *str, int cur)
 {
-    draw_color_square (context, 0xFFEBDBB2, 2, 18, x, y);
-    // could simply invert the buffer colors with some sorta bit masking ?
-}
-void
-draw_command_str (buffer_t *context)
-{
-    // for (char *chr = context->render_context->state->current_command_string; *chr != '\0'; chr++)
-    //     draw_character (context, *chr);
-    char *str = context->render_context->state->current_command_string;
-    int cur   = context->render_context->state->cursor;
-
-    int32_t x, y;
-
+    int32_t x, y, cur_x, cur_y;
     x = PADDING;
     y = (context->height - 18) / 2;
 
+    char *string_buf = calloc (1, context->width * context->height);
+
     for (int i = 0; i < strlen (str); i++)
         {
-            draw_character (context, str[i], &x, &y);
-            if (i == (int)cur - 1)
-                draw_cur (context, x, y);
+            draw_character (context->render_context->sft, string_buf, str[i], context->width, context->height, &x, &y);
+            if (cur && i == (int)cur - 1)
+                cur_y = x, cur_y = y;
         }
-    //     draw_color_square (context, (int)cur - 1 == i ? COLOR_BG : COLOR_FG, COMMAND_HEIGHT, COMMAND_HEIGHT,
-    //                        PADDING + (i * COMMAND_HEIGHT), 0);
+    // convert the char* from sft to uint32_t*
+    buffer_t render_buf = INIT_BUF (context, context->width, context->height, 0, 0, render_buf);
+    for (int i = 0; i < context->width * context->height; ++i)
+        render_buf.buffer[i] = string_buf[i] << 24 | 0xEBDBB2;
+
+    draw_cur (&render_buf, x, y);
+    free (string_buf);
+    draw_to_buffer (context, &render_buf);
+    free (render_buf.buffer);
+}
+
+void
+draw_command_str (buffer_t *context)
+{
+    char *str = context->render_context->state->current_command_string;
+    int cur   = context->render_context->state->cursor;
+
+    draw_str (context, str, cur);
 }
 
 void
@@ -299,7 +320,7 @@ get_font (SFT *sft)
     // get font file dir
     FcConfig *config = FcInitLoadConfigAndFonts ();
     // not working rn ??
-    FcPattern *pat = FcNameParse ((const FcChar8 *)("Iosevka Term J Nerd"));
+    FcPattern *pat = FcNameParse ((const FcChar8 *)("Sarasa Term J Nerd Font"));
     FcConfigSubstitute (config, pat, FcMatchPattern);
     FcDefaultSubstitute (pat);
 
@@ -320,7 +341,6 @@ get_font (SFT *sft)
     INFO ("found font: %s", fontFile);
 
     sft->font = sft_loadfile (fontFile);
-    // sft->font = sft_loadfile ("/home/yari/dev/woof/src/FiraGO-Regular.ttf");
 
     if (sft->font == NULL)
         die ("font failed to load :O");

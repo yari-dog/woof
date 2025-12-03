@@ -8,7 +8,7 @@ dir:
 	mkdir -p build
 
 main: dir src/main.c
-	gcc -std=c11 -D_POSIX_C_SOURCE=200809L -o build/main $(SRC) $(INCLUDE) $(PKGS) -lm
+	gcc -std=c11 -D_POSIX_C_SOURCE=200809L -o build/main $(SRC) $(INCLUDE) $(PKGS) -lm -g -O2
 
 xdg-shell:
 	wayland-scanner client-header $(PROTOCOL_LOCATION)xdg-shell.xml include/xdg-shell.h
