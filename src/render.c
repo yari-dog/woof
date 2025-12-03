@@ -179,7 +179,7 @@ draw_cur (buffer_t *context, int x, int y)
 }
 
 void
-draw_character (SFT *sft, char *string_buff, SFT_UChar chr, uint32_t width, uint32_t height, int32_t *x, int32_t *y)
+draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t width, uint32_t height, int32_t *x, int32_t *y)
 {
     SFT_Glyph gid;
     if (sft_lookup (sft, chr, &gid) < 0)
@@ -202,10 +202,10 @@ draw_character (SFT *sft, char *string_buff, SFT_UChar chr, uint32_t width, uint
 
     *x += mtx.leftSideBearing;
 
-    char *buff = &string_buff[(*y + (height / 2 + mtx.yOffset)) * width];
+    char *buf = &string_buf[(*y + (height / 2 + mtx.yOffset)) * width];
 
     for (int i = 0; i < img.height; ++i)
-        memcpy (&buff[(i * width) + *x], &pixels[i * img.width], img.width);
+        memcpy (&buf[(i * width) + *x], &pixels[i * img.width], img.width);
 
     *x += mtx.advanceWidth;
 }
