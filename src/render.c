@@ -19,9 +19,7 @@
         .global_y       = CONTEXT->global_y + T_Y,                                                                     \
         .buffer         = calloc (1, T_HEIGHT * CONTEXT->render_context->color_depth * T_WIDTH),                       \
         .render_context = CONTEXT->render_context,                                                                     \
-    };                                                                                                                 \
-    for (int i = 0; i < T_HEIGHT; ++i)                                                                                 \
-        memcpy (&T_NAME.buffer[(i * T_WIDTH)], &CONTEXT->buffer[(i * CONTEXT->width) + T_X], T_NAME.stride);
+    };
 
 bool r_char = false;
 void draw_borders (buffer_t *context);
