@@ -201,6 +201,7 @@ void
 draw_cur (buffer_t *context, int x, int y)
 {
     draw_color_square (context, 0xFFEBDBB2, 2, 18, x, y);
+    // could simply invert the buffer colors with some sorta bit masking ?
 }
 void
 draw_command_str (buffer_t *context)
