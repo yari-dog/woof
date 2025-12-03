@@ -29,8 +29,7 @@ blend (buffer_t *context, buffer_t *input_buf)
 {
 
     uint32_t *fg, *bg;
-    uint32_t bg_a, bg_r, bg_g, bg_b;
-    uint32_t fg_a, fg_r, fg_g, fg_b;
+    uint32_t bg_a, fg_a;
     uint32_t b_a, b_r, b_g, b_b;
 
     uint32_t *buf  = context->buffer;
@@ -46,35 +45,28 @@ blend (buffer_t *context, buffer_t *input_buf)
                 {
                     // if opaque
                     // is the same as if (fg >> 24 == 0xFF)
-                    if (*fg >= 0xFF000000)
-                        continue;
+                    fg_a = *fg >> 24;
 
-                    bg_a = (*bg & 0xFF000000) >> 24;
-                    fg_a = (*fg & 0xFF000000) >> 24;
-                    b_a  = fg_a + (bg_a * (0xFF - fg_a) / 0xFF);
-
-                    if (!b_a)
+                    if (fg_a == 0xFF)
                         {
-                            input[j] = 0x0;
+                            buf[j] = input[j];
                             continue;
                         }
 
-                    bg_r = (*bg & 0xFF0000) >> 16;
-                    bg_g = (*bg & 0xFF00) >> 8;
-                    bg_b = (*bg & 0xFF);
+                    if (!fg_a)
+                        continue;
 
-                    fg_r = (*fg & 0xFF0000) >> 16;
-                    fg_g = (*fg & 0xFF00) >> 8;
-                    fg_b = (*fg & 0xFF);
+                    bg_a = *bg >> 24;
+                    b_a  = fg_a + (bg_a * (0xFF - fg_a) / 0xFF);
 
-                    b_r = ((fg_r * fg_a + bg_r * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 16;
-                    b_g = ((fg_g * fg_a + bg_g * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 8;
-                    b_b = ((fg_b * fg_a + bg_b * bg_a * (0xFF - fg_a) / 0xFF) / b_a);
+                    b_r = ((((*fg >> 16) & 0xFF) * fg_a + ((*bg >> 16) & 0xFF) * bg_a * (0xFF - fg_a) / 0xFF) / b_a)
+                          << 16;
+                    b_g = ((((*fg >> 8) & 0xFF) * fg_a + ((*bg >> 8) & 0xFF) * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 8;
+                    b_b = (((*fg & 0xFF) * fg_a + (*bg & 0xFF) * bg_a * (0xFF - fg_a) / 0xFF) / b_a);
                     b_a = b_a << 24;
 
-                    input[j] = b_a | b_r | b_g | b_b;
+                    buf[j] = b_a | b_r | b_g | b_b;
                 }
-            memcpy (buf, input, input_buf->stride);
             buf   += context->width;
             input += input_buf->width;
         }
@@ -157,7 +149,7 @@ void
 draw_main_surface (render_context_t *context)
 {
     // set surface to be transparent first.
-    memset (context->surface_buf->buffer, 0x00, context->surface_buf->stride * context->surface_buf->height);
+    // memset (context->surface_buf->buffer, 0x00, context->surface_buf->stride * context->surface_buf->height);
     // draw_color_square (context, surface_buf, 0x1a2b3c4d, context->width, context->height, 0, 0);
 }
 
