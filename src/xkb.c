@@ -131,7 +131,8 @@ xkb_handle_key (state_t *state, uint32_t keycode)
             break;
         case XKB_KEY_Return:
             state->close = true;
-            run (state);
+            if (strcmp (strtok (state->current_command_string, " "), "run"))
+                run (state);
             break;
         case XKB_KEY_Left:
             move_cursor (state, -1);

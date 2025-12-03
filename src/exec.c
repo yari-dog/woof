@@ -24,5 +24,5 @@ exec_cmd (char *cmd)
 void
 run (state_t *state)
 {
-    exec_cmd (&state->current_command_string[sizeof (INITIAL_COMMAND) - 1]); // -1 cause newline
+    exec_cmd (&state->current_command_string[5]); // remove ":run "
 }
