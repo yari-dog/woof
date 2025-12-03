@@ -224,14 +224,14 @@ draw_str (buffer_t *context, char *str, int cur)
         {
             draw_character (context->render_context->sft, string_buf, str[i], context->width, context->height, &x, &y);
             if (cur && i == (int)cur - 1)
-                cur_y = x, cur_y = y;
+                cur_x = x, cur_y = y;
         }
     // convert the char* from sft to uint32_t*
     buffer_t render_buf = INIT_BUF (context, context->width, context->height, 0, 0, render_buf);
     for (int i = 0; i < context->width * context->height; ++i)
         render_buf.buffer[i] = string_buf[i] << 24 | 0xEBDBB2;
 
-    draw_cur (&render_buf, x, y);
+    draw_cur (&render_buf, cur_x, cur_y);
     free (string_buf);
     draw_to_buffer (context, &render_buf);
     free (render_buf.buffer);
