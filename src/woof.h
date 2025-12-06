@@ -32,17 +32,13 @@ init_woof ()
 
     state->xkb = xkb_init ();
 
-<<<<<<< HEAD
     const char *xdg_backend = getenv ("XDG_BACKEND");
     // get display server
     // if (!(xdg_backend = getenv ("XDG_BACKEND")))
     //     die ("cant find backend lmao");
 
     // if (strcmp (xdg_backend, WAYLAND) == 0)
-    if (getenv ("WAYLAND_DISPLAY") || strcmp (xdg_backend, WAYLAND))
-=======
     if (getenv ("WAYLAND_DISPLAY") || strcmp (getenv ("XDG_SESSION_TYPE"), "wayland"))
->>>>>>> refs/remotes/origin/main
         {
             state->wlc        = wlc_init ();
             state->wlc->state = state; // migraine inducing statement
@@ -50,18 +46,18 @@ init_woof ()
             woof->main_loop   = wlc_main_loop;
             woof->cleanup     = wlc_disconnect;
         }
-    // else if (strcmp (xdg_backend, X11) == 0)
-    // {
-    // i dont know what that X11 macro should actually be lmao
-    /* setup for x11 would be as follows:
-     * state->xc            = xc_init ();
-     * state->xc->state    = state; // migraine inducing statement
-     * woof->start                = xc_start;
-     * woof->main_loop            = xc_main_loop;
-     * woof->cleanup              = xc_disconnect;
-     */
-    //     die ("uh wait");
-    // }
+    else if (strcmp (xdg_backend, X11) == 0)
+        {
+            // i dont know what that X11 macro should actually be lmao
+            /* setup for x11 would be as follows:
+             * state->xc            = xc_init ();
+             * state->xc->state    = state; // migraine inducing statement
+             * woof->start                = xc_start;
+             * woof->main_loop            = xc_main_loop;
+             * woof->cleanup              = xc_disconnect;
+             */
+            die ("uh wait");
+        }
     else
         die ("no display server ? :(");
 
