@@ -25,7 +25,7 @@ bool r_char = false;
 void draw_borders (buffer_t *context);
 
 void
-blend (buffer_t *context, buffer_t *input_buf)
+blend (const buffer_t *context, const buffer_t *input_buf)
 {
 
     uint8_t bg_arr[4];
@@ -43,22 +43,20 @@ blend (buffer_t *context, buffer_t *input_buf)
         {
             for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
                 {
-                    *(uint32_t *)&bg_arr = *bg;
+                    // put the 32 bit ints into 4 8 bit ints (bgra)
                     *(uint32_t *)&fg_arr = *fg;
+                    *(uint32_t *)&bg_arr = *bg;
 
-                    // if opaque
-                    // is the same as if (fg >> 24 == 0xFF)
-                    if (fg_arr[3] >= 0xFF)
+                    if (fg_arr[3] == 0xFF)
                         continue;
 
-                    blend_arr[3] = fg_arr[3] + (bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF);
-
-                    if (!blend_arr[3])
+                    if (!(blend_arr[3] = fg_arr[3] + (bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF)))
                         {
                             *fg = 0x0;
                             continue;
                         }
 
+                    // left to be individual because gcc will optimize out a loop and it makes more sense like this
                     // r
                     blend_arr[2]
                         = ((fg_arr[2] * fg_arr[3] + bg_arr[2] * bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF) / blend_arr[3]);
