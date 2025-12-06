@@ -59,7 +59,7 @@ insert (state_t *state, char *text, ssize_t n)
 {
     // check if backspace will put cursor into the negative
     // (could probably do it branchlessly easily but that will be unreadable)
-    if ((int)state->cursor + n < 0)
+    if ((int)state->cursor + n < 1)
         n = MAX (0, (int)state->cursor + n);
 
     if (strlen (state->current_command_string) + NULL_TERM_SIZE + n > state->ccs_buffsize)
@@ -131,7 +131,8 @@ xkb_handle_key (state_t *state, uint32_t keycode)
             break;
         case XKB_KEY_Return:
             state->close = true;
-            run (state);
+            if (strcmp (strtok (state->current_command_string, " "), "run"))
+                run (state);
             break;
         case XKB_KEY_Left:
             move_cursor (state, -1);

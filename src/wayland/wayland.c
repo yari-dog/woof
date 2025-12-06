@@ -60,6 +60,7 @@ wlc_wipe_buffer (wlc_t *wlc)
 void
 wlc_set_surface (wlc_t *wlc)
 {
+    int64_t start_time               = ms_since_epoch ();
     render_context_t *render_context = wlc->state->render_context;
     buffer_t *surface_buf            = render_context->surface_buf;
 
@@ -69,7 +70,8 @@ wlc_set_surface (wlc_t *wlc)
     wl_surface_attach (wlc->surface, wlc->buffer, 0, 0);
     wl_surface_damage_buffer (wlc->surface, 0, 0, surface_buf->width, surface_buf->height);
     wl_surface_commit (wlc->surface);
-    INFO ("frame rendered :o");
+    int64_t current_time = ms_since_epoch ();
+    INFO ("frame rendered in %li ms :o", current_time - start_time);
 }
 
 void
