@@ -118,31 +118,13 @@ draw_to_buffer (buffer_t *context, buffer_t *input_buf)
 }
 
 void
-draw_checkerboard (buffer_t *context, uint32_t bg, uint32_t color, uint32_t width, uint32_t height, int32_t x,
-                   int32_t y)
-{
-    buffer_t temp_buf = INIT_BUF (context, width, height, x, y, temp_buf);
-    for (int i = 0; i < height; ++i)
-        for (int j = 0; j < width; ++j)
-            {
-                if ((i + j / 8 * 8) % 16 < 8)
-                    temp_buf.buffer[i * width + j] = color;
-                else
-                    temp_buf.buffer[i * width + j] = bg;
-            }
-
-    // draw that to the surface buffer
-    draw_to_buffer (context, &temp_buf);
-    free (temp_buf.buffer);
-}
-
-void
 draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t height, int32_t x, int32_t y)
 {
     buffer_t temp_buf = INIT_BUF (context, width, height, x, y, temp_buf);
+    uint32_t *buf     = temp_buf.buffer;
 
     for (int i = 0; i < width * height; i++)
-        temp_buf.buffer[i] = color;
+        *buf++ = color;
     draw_to_buffer (context, &temp_buf);
     free (temp_buf.buffer);
 }
@@ -154,16 +136,6 @@ draw_main_surface (render_context_t *context)
     // set surface to be transparent first.
     memset (context->surface_buf->buffer, 0x00, context->surface_buf->stride * context->surface_buf->height);
     // draw_color_square (context, surface_buf, 0x1a2b3c4d, context->width, context->height, 0, 0);
-}
-
-// move 0x------ff to 0xff------
-uint32_t
-font_mask (char chr)
-{
-    if (chr == 0x0)
-        return 0x0;
-
-    return chr << 24 | 0xEBDBB2;
 }
 
 void
@@ -213,7 +185,8 @@ draw_str (buffer_t *context, char *str, int cur)
     x = PADDING;
     y = (context->height - 18) / 2;
 
-    char *string_buf = calloc (1, context->width * context->height);
+    char *string_buf      = calloc (1, context->width * context->height);
+    char *string_buf_temp = string_buf;
 
     for (int i = 0; i < strlen (str); i++)
         {
@@ -222,9 +195,10 @@ draw_str (buffer_t *context, char *str, int cur)
                 cur_y = x, cur_y = y;
         }
     // convert the char* from sft to uint32_t*
-    buffer_t render_buf = INIT_BUF (context, context->width, context->height, 0, 0, render_buf);
+    buffer_t render_buf       = INIT_BUF (context, context->width, context->height, 0, 0, render_buf);
+    uint32_t *render_buf_temp = render_buf.buffer;
     for (int i = 0; i < context->width * context->height; ++i)
-        render_buf.buffer[i] = string_buf[i] << 24 | 0xEBDBB2;
+        *render_buf_temp++ = *string_buf_temp++ << 24 | 0xEBDBB2;
 
     draw_cur (&render_buf, x, y);
     free (string_buf);
