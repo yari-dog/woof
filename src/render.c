@@ -49,8 +49,8 @@ blend (buffer_t *context, buffer_t *input_buf)
                     if (*fg >= 0xFF000000)
                         continue;
 
-                    bg_a = (*bg & 0xFF000000) >> 24;
-                    fg_a = (*fg & 0xFF000000) >> 24;
+                    bg_a = *bg >> 24;
+                    fg_a = *fg >> 24;
                     b_a  = fg_a + (bg_a * (0xFF - fg_a) / 0xFF);
 
                     if (!b_a)

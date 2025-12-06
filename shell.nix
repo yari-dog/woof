@@ -6,6 +6,7 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     wayland-scanner
     wayland-protocols
+    wlr-protocols
     wayland-utils
     wayland
     libxkbcommon
@@ -13,5 +14,7 @@ pkgs.mkShell {
   ];
   shellHook = ''
     #     zsh
-      [ -x ~/.zshrc ] && source ~/.zshrc'';
+      [ -x ~/.zshrc ] && source ~/.zshrc
+      export WAYLAND_PROTOCOL_LOC=${pkgs.wayland-protocols}
+      export WLR_PROTOCOL_LOC=${pkgs.wlr-protocols}'';
 }
