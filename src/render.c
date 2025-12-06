@@ -28,51 +28,48 @@ void
 blend (buffer_t *context, buffer_t *input_buf)
 {
 
-    uint32_t *fg, *bg;
-    uint32_t bg_a, bg_r, bg_g, bg_b;
-    uint32_t fg_a, fg_r, fg_g, fg_b;
-    uint32_t b_a, b_r, b_g, b_b;
+    uint8_t bg_arr[4];
+    uint8_t fg_arr[4];
+    uint8_t blend_arr[4];
 
     uint32_t *buf  = context->buffer;
     buf           += (context->width * input_buf->y) + input_buf->x;
 
     uint32_t *input = input_buf->buffer;
 
+    uint32_t *fg = input;
+    uint32_t *bg = buf;
     for (int i = 0; i < input_buf->height; ++i)
         {
-            fg = input;
-            bg = buf;
             for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
                 {
+                    *(uint32_t *)&bg_arr = *bg;
+                    *(uint32_t *)&fg_arr = *fg;
+
                     // if opaque
                     // is the same as if (fg >> 24 == 0xFF)
-                    if (*fg >= 0xFF000000)
+                    if (fg_arr[3] >= 0xFF)
                         continue;
 
-                    bg_a = *bg >> 24;
-                    fg_a = *fg >> 24;
-                    b_a  = fg_a + (bg_a * (0xFF - fg_a) / 0xFF);
+                    blend_arr[3] = fg_arr[3] + (bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF);
 
-                    if (!b_a)
+                    if (!blend_arr[3])
                         {
-                            input[j] = 0x0;
+                            *fg = 0x0;
                             continue;
                         }
 
-                    bg_r = (*bg & 0xFF0000) >> 16;
-                    bg_g = (*bg & 0xFF00) >> 8;
-                    bg_b = (*bg & 0xFF);
+                    // r
+                    blend_arr[2]
+                        = ((fg_arr[2] * fg_arr[3] + bg_arr[2] * bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF) / blend_arr[3]);
+                    // g
+                    blend_arr[1]
+                        = ((fg_arr[1] * fg_arr[3] + bg_arr[1] * bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF) / blend_arr[3]);
+                    // b
+                    blend_arr[0]
+                        = ((fg_arr[0] * fg_arr[3] + bg_arr[0] * bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF) / blend_arr[3]);
 
-                    fg_r = (*fg & 0xFF0000) >> 16;
-                    fg_g = (*fg & 0xFF00) >> 8;
-                    fg_b = (*fg & 0xFF);
-
-                    b_r = ((fg_r * fg_a + bg_r * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 16;
-                    b_g = ((fg_g * fg_a + bg_g * bg_a * (0xFF - fg_a) / 0xFF) / b_a) << 8;
-                    b_b = ((fg_b * fg_a + bg_b * bg_a * (0xFF - fg_a) / 0xFF) / b_a);
-                    b_a = b_a << 24;
-
-                    input[j] = b_a | b_r | b_g | b_b;
+                    *fg = *(uint32_t *)&blend_arr;
                 }
             memcpy (buf, input, input_buf->stride);
             buf   += context->width;
