@@ -27,7 +27,6 @@ void draw_borders (buffer_t *context);
 void
 blend (const buffer_t *context, const buffer_t *input_buf)
 {
-
     uint32_t *buf          = context->buffer;
     buf                   += (context->width * input_buf->y) + input_buf->x;
     uint32_t *input        = input_buf->buffer;
@@ -40,17 +39,17 @@ blend (const buffer_t *context, const buffer_t *input_buf)
     for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
         for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
             {
-                bg_alpha = (*(*bl_a))[3];
+                bg_alpha = (**bl_a)[3];
 
-                if ((*(*fg_a))[3] == 0xFF)
+                if ((**fg_a)[3] == 0xFF || !*bg)
                     {
                         *bg = *fg;
                         continue;
                     }
 
-                (*(*bl_a))[3] = (*(*fg_a))[3] + (bg_alpha * (0xFF - (*(*fg_a))[3]) / 0xFF);
+                (**bl_a)[3] = (**fg_a)[3] + (bg_alpha * (0xFF - (**fg_a)[3]) / 0xFF);
 
-                if (!(*(*bl_a))[3])
+                if (!(**bl_a)[3])
                     {
                         *bg = 0x0;
                         continue;
@@ -58,17 +57,14 @@ blend (const buffer_t *context, const buffer_t *input_buf)
 
                 // left to be individual because gcc will optimize out a loop and it makes more sense like this
                 // r
-                (*(*bl_a))[2]
-                    = (((*(*fg_a))[2] * (*(*fg_a))[3] + (*(*bl_a))[2] * bg_alpha * (0xFF - (*(*fg_a))[3]) / 0xFF)
-                       / (*(*bl_a))[3]);
+                (**bl_a)[2] = (((**fg_a)[2] * (**fg_a)[3] + (**bl_a)[2] * bg_alpha * (0xFF - (**fg_a)[3]) / 0xFF)
+                               / (**bl_a)[3]);
                 // g
-                (*(*bl_a))[1]
-                    = (((*(*fg_a))[1] * (*(*fg_a))[3] + (*(*bl_a))[1] * bg_alpha * (0xFF - (*(*fg_a))[3]) / 0xFF)
-                       / (*(*bl_a))[3]);
+                (**bl_a)[1] = (((**fg_a)[1] * (**fg_a)[3] + (**bl_a)[1] * bg_alpha * (0xFF - (**fg_a)[3]) / 0xFF)
+                               / (**bl_a)[3]);
                 // b
-                (*(*bl_a))[0]
-                    = (((*(*fg_a))[0] * (*(*fg_a))[3] + (*(*bl_a))[0] * bg_alpha * (0xFF - (*(*fg_a))[3]) / 0xFF)
-                       / (*(*bl_a))[3]);
+                (**bl_a)[0] = (((**fg_a)[0] * (**fg_a)[3] + (**bl_a)[0] * bg_alpha * (0xFF - (**fg_a)[3]) / 0xFF)
+                               / (**bl_a)[3]);
             }
 }
 
@@ -87,8 +83,8 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
         }
 
     // this avoids a div/0 error
-    uint32_t stride     = context->stride;
-    int32_t trim_stride = context->render_context->color_depth * trim_width;
+    uint32_t stride      = context->stride;
+    uint32_t trim_stride = context->render_context->color_depth * trim_width;
 
     uint32_t *temp_buf = calloc (1, trim_height * trim_stride);
     for (int i = 0; i < trim_height; ++i)
@@ -102,7 +98,7 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
 }
 
 void
-draw_to_buffer (buffer_t *context, buffer_t *input_buf)
+draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
 {
     // will it go off the edge ?
     // if so, trim it up :3
@@ -111,7 +107,12 @@ draw_to_buffer (buffer_t *context, buffer_t *input_buf)
     if (input_buf->height == 0 || input_buf->height == 0)
         return;
 
-    blend (context, input_buf);
+    if (should_blend)
+        blend (context, input_buf);
+    else
+        for (int i = 0; i < input_buf->height; ++i)
+            memcpy (&context->buffer[(context->width * (i + input_buf->y)) + input_buf->x],
+                    &input_buf->buffer[i * input_buf->width], input_buf->stride);
 }
 
 void
@@ -122,7 +123,7 @@ draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t h
 
     for (int i = 0; i < width * height; i++)
         *buf++ = color;
-    draw_to_buffer (context, &temp_buf);
+    draw_to_buffer (context, &temp_buf, false);
     free (temp_buf.buffer);
 }
 
@@ -199,7 +200,7 @@ draw_str (buffer_t *context, char *str, int cur)
 
     draw_cur (&render_buf, x, y);
     free (string_buf);
-    draw_to_buffer (context, &render_buf);
+    draw_to_buffer (context, &render_buf, true);
     free (render_buf.buffer);
 }
 
@@ -221,7 +222,7 @@ draw_input (buffer_t *context)
 
     draw_command_str (&temp_buf);
 
-    draw_to_buffer (context, &temp_buf);
+    draw_to_buffer (context, &temp_buf, false);
     free (temp_buf.buffer);
 }
 
@@ -232,7 +233,7 @@ draw_results (buffer_t *context)
     draw_color_square (&temp_buf, COLOR_BG, temp_buf.width, temp_buf.height, 0, 0);
 
     draw_borders (&temp_buf);
-    draw_to_buffer (context, &temp_buf);
+    draw_to_buffer (context, &temp_buf, false);
     free (temp_buf.buffer);
     // TODO: draw results
 }
