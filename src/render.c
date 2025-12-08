@@ -28,36 +28,29 @@ void
 blend (const buffer_t *context, const buffer_t *input_buf)
 {
 
-    uint8_t bg_arr[4];
-    uint8_t fg_arr[4];
+    uint32_t *buf          = context->buffer;
+    buf                   += (context->width * input_buf->y) + input_buf->x;
+    uint32_t *input        = input_buf->buffer;
+    uint32_t *fg           = input;
+    uint32_t *bg           = buf;
+    uint8_t (*(*fg_a))[4]  = (void *)&fg;
+    uint8_t (*(*bl_a))[4]  = (void *)&bg;
 
-    uint32_t *buf  = context->buffer;
-    buf           += (context->width * input_buf->y) + input_buf->x;
-
-    uint32_t *input = input_buf->buffer;
-
-    uint32_t *fg = input;
-    uint32_t *bg = buf;
-    uint8_t (*blend_arr)[4];
+    uint8_t bg_alpha;
     for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
         for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
             {
-                // put the 32 bit ints into 4 8 bit ints (bgra)
-                *(uint32_t *)&fg_arr = *fg;
-                *(uint32_t *)&bg_arr = *bg;
+                bg_alpha = (*(*bl_a))[3];
 
-                // directly manipulate the bits in the context buffer
-                blend_arr = (void *)bg;
-
-                if (fg_arr[3] == 0xFF)
+                if ((*(*fg_a))[3] == 0xFF)
                     {
                         *bg = *fg;
                         continue;
                     }
 
-                (*blend_arr)[3] = fg_arr[3] + (bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF);
+                (*(*bl_a))[3] = (*(*fg_a))[3] + (bg_alpha * (0xFF - (*(*fg_a))[3]) / 0xFF);
 
-                if (!(*blend_arr)[3])
+                if (!(*(*bl_a))[3])
                     {
                         *bg = 0x0;
                         continue;
@@ -65,14 +58,17 @@ blend (const buffer_t *context, const buffer_t *input_buf)
 
                 // left to be individual because gcc will optimize out a loop and it makes more sense like this
                 // r
-                (*blend_arr)[2]
-                    = ((fg_arr[2] * fg_arr[3] + bg_arr[2] * bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF) / (*blend_arr)[3]);
+                (*(*bl_a))[2]
+                    = (((*(*fg_a))[2] * (*(*fg_a))[3] + (*(*bl_a))[2] * bg_alpha * (0xFF - (*(*fg_a))[3]) / 0xFF)
+                       / (*(*bl_a))[3]);
                 // g
-                (*blend_arr)[1]
-                    = ((fg_arr[1] * fg_arr[3] + bg_arr[1] * bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF) / (*blend_arr)[3]);
+                (*(*bl_a))[1]
+                    = (((*(*fg_a))[1] * (*(*fg_a))[3] + (*(*bl_a))[1] * bg_alpha * (0xFF - (*(*fg_a))[3]) / 0xFF)
+                       / (*(*bl_a))[3]);
                 // b
-                (*blend_arr)[0]
-                    = ((fg_arr[0] * fg_arr[3] + bg_arr[0] * bg_arr[3] * (0xFF - fg_arr[3]) / 0xFF) / (*blend_arr)[3]);
+                (*(*bl_a))[0]
+                    = (((*(*fg_a))[0] * (*(*fg_a))[3] + (*(*bl_a))[0] * bg_alpha * (0xFF - (*(*fg_a))[3]) / 0xFF)
+                       / (*(*bl_a))[3]);
             }
 }
 
