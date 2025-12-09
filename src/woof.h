@@ -46,6 +46,10 @@ init_woof ()
             woof->main_loop   = wlc_main_loop;
             woof->cleanup     = wlc_disconnect;
         }
+    // TODO: (x): implement this
+    // xc_init() is the function that inits the struct, it doesnt implement any x setup
+    // start is your actual x setup code (making the shm buffers, etc)
+    // the others are comprehendable
     else if (strcmp (xdg_backend, X11) == 0)
         {
             // i dont know what that X11 macro should actually be lmao
@@ -56,7 +60,7 @@ init_woof ()
              * woof->main_loop            = xc_main_loop;
              * woof->cleanup              = xc_disconnect;
              */
-            die ("uh wait");
+            die ("uh wait"); // remove when x11
         }
     else
         die ("no display server ? :(");
