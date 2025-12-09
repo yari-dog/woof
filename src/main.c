@@ -12,7 +12,7 @@ main ()
 
     // main loop. entry etc etc etc
     while (!woof->state->close)
-        if (ms_since_epoch () - start_time < 100) // you don't need more than 10fps on a menu
+        if (ms_since_epoch () - start_time < 20) // you don't need more than 20fps on a menu
             {
                 woof->main_loop (woof->state);
                 start_time = ms_since_epoch ();

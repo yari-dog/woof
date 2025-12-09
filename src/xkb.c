@@ -82,18 +82,21 @@ insert (state_t *state, char *text, ssize_t n)
     move_cursor (state, n);
 }
 
-void
+bool
 xkb_handle_quick_double_key (state_t *state, clock_t current_time, char *buf)
 {
     xkb_t *xkb = state->xkb;
     if (current_time - xkb->time_of_last_key > DOUBLEKEYLIMIT)
-        return insert (state, buf, strnlen (buf, 8)); // return the result of void (i dont want to have to add braces)
+        {
+            insert (state, buf, strnlen (buf, 8)); // return the result of void (i dont want to have to add braces)
+            return false;
+        }
 
     bool has_binding = false;
 
     // TODO: real logic and not just this
     // ig can do it either way
-    if (xkb->last_key == 'q' && strcmp (buf, "q") == 0)
+    if (xkb->last_key == 'q' && buf[0] == 'q')
         {
             has_binding  = true;
             state->close = true;
@@ -106,10 +109,13 @@ xkb_handle_quick_double_key (state_t *state, clock_t current_time, char *buf)
     if (has_binding)
         {
             insert (state, NULL, next_rune (state, -1) - state->cursor);
+            xkb->last_key = ' ';
             // TODO: stop last key spam  to delete characters
         }
     else
         insert (state, buf, strnlen (buf, 8)); // return the result of void (i dont want to have to add braces)
+    //
+    return has_binding;
 }
 
 void
@@ -142,10 +148,12 @@ xkb_handle_key (state_t *state, uint32_t keycode)
             break;
         default:
             if (xkb_keysym_to_utf8 (sym, buf, 8))
-                xkb_handle_quick_double_key (state, current_time, buf);
+                if (!xkb_handle_quick_double_key (state, current_time, buf))
+                    {
+                        xkb->time_of_last_key = current_time;
+                        xkb->last_key         = buf[0];
+                    }
         }
-    xkb->time_of_last_key = current_time;
-    xkb->last_key         = buf[0];
 
     state->update = true;
 
