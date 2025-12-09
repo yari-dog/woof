@@ -18,6 +18,7 @@ typedef struct wlc_t
     struct wl_shm_pool *shm_pool;
     struct wl_output *output;
     struct wl_buffer *buffer;
+    struct wl_buffer *double_buf;
 
     // windowing
     struct wl_surface *surface;

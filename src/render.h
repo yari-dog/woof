@@ -11,6 +11,7 @@ typedef struct render_context_t
 {
     uint8_t color_depth;
     buffer_t *surface_buf;
+    buffer_t *double_buf;
     state_t *state;
     SFT *sft;
 } render_context_t;
@@ -19,7 +20,6 @@ typedef struct buffer_t
 {
     uint32_t stride;
     uint32_t *buffer;
-    uint32_t *double_buf;
     uint32_t width;
     uint32_t height;
     int32_t x;

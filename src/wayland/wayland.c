@@ -29,8 +29,8 @@ wlc_init_buffer (wlc_t *wlc)
     // make the file
     int fd = create_shm_file (size);
 
-    surface_buf->double_buf = calloc (1, size);
-    surface_buf->buffer     = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    INFO ("size %i", size);
+    surface_buf->buffer = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (surface_buf->buffer == MAP_FAILED)
         die ("fucked up mapping the shmm :\\ sowwy");
 
@@ -63,9 +63,13 @@ wlc_set_surface (wlc_t *wlc)
 {
     int64_t start_time               = ms_since_epoch ();
     render_context_t *render_context = wlc->state->render_context;
-    buffer_t *surface_buf            = render_context->surface_buf;
-
     render (render_context);
+
+    buffer_t *surface_buf = render_context->surface_buf;
+
+    struct wl_buffer *temp_buf = wlc->buffer;
+    wlc->buffer                = wlc->double_buf;
+    wlc->double_buf            = temp_buf;
 
     // wl_surface_set_buffer_scale (wlc->surface, 1);
     wl_surface_attach (wlc->surface, wlc->buffer, 0, 0);
@@ -98,6 +102,17 @@ wlc_resize_handler (wlc_t *wlc, uint32_t width, uint32_t height)
     wlc_wipe_buffer (wlc);
     wlc_init_buffer (wlc);
 
+    buffer_t *temp_buf;
+    // build double buffer
+    temp_buf                                = wlc->state->render_context->surface_buf;
+    wlc->state->render_context->surface_buf = wlc->state->render_context->double_buf;
+    wlc->state->render_context->double_buf  = temp_buf;
+    wlc->double_buf                         = wlc->buffer;
+
+    wlc_set_size (wlc, temp_buf->width, temp_buf->height);
+
+    wlc_wipe_buffer (wlc);
+    wlc_init_buffer (wlc);
     wlc_set_surface (wlc);
 }
 

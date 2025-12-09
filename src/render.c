@@ -261,20 +261,13 @@ render (render_context_t *context)
 {
     INFO ("rendering into buffer :3");
     // double buf swap
-    uint32_t *tmp_buf;
-    tmp_buf                          = context->surface_buf->buffer;
-    context->surface_buf->buffer     = context->surface_buf->double_buf;
-    context->surface_buf->double_buf = tmp_buf;
+    // draw_main_surface (context);
+    draw_input (context->double_buf);
+    draw_results (context->double_buf);
 
-    draw_main_surface (context);
-    draw_input (context->surface_buf);
-    draw_results (context->surface_buf);
-
-    memcpy (context->surface_buf->double_buf, context->surface_buf->buffer,
-            context->surface_buf->stride * context->surface_buf->height);
-
-    context->surface_buf->double_buf = context->surface_buf->buffer;
-    context->surface_buf->buffer     = tmp_buf;
+    buffer_t *temp_buf   = context->double_buf;
+    context->double_buf  = context->surface_buf;
+    context->surface_buf = temp_buf;
     // some tests
 #ifdef RENDER_TESTING
     draw_color_square (context->surface_buf, 0xFF282828, 80, 80, 0, 0);
@@ -333,6 +326,7 @@ render_init (state_t *state)
 {
     render_context_t *context   = calloc (1, sizeof (render_context_t));
     buffer_t *surface_buf       = calloc (1, sizeof (buffer_t));
+    buffer_t *double_buf        = calloc (1, sizeof (buffer_t));
     context->state              = state;
     context->color_depth        = COLOR_DEPTH;
     context->surface_buf        = surface_buf;
@@ -342,6 +336,12 @@ render_init (state_t *state)
     surface_buf->y              = 0;
     surface_buf->render_context = context;
 
+    context->double_buf        = double_buf;
+    double_buf->height         = HEIGHT;
+    double_buf->width          = WIDTH;
+    double_buf->x              = 0;
+    double_buf->y              = 0;
+    double_buf->render_context = context;
     // font shit
     SFT *sft = calloc (1, sizeof (SFT));
 
