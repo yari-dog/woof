@@ -236,7 +236,7 @@ void
 draw_results (buffer_t *context)
 {
     buffer_t temp_buf = INIT_BUF (context, WIDTH, (HEIGHT - PADDING - COMMAND_HEIGHT), 0, 0, temp_buf);
-    // draw_color_square (&temp_buf, COLOR_BG, temp_buf.width, temp_buf.height, 0, 0);
+    draw_color_square (&temp_buf, COLOR_BG, temp_buf.width, temp_buf.height, 0, 0);
 
     draw_borders (&temp_buf);
     draw_to_buffer (context, &temp_buf, false);
@@ -262,7 +262,6 @@ render (render_context_t *context)
     INFO ("rendering into buffer :3");
     // double buf swap
     uint32_t *tmp_buf;
-
     tmp_buf                          = context->surface_buf->buffer;
     context->surface_buf->buffer     = context->surface_buf->double_buf;
     context->surface_buf->double_buf = tmp_buf;
@@ -270,6 +269,9 @@ render (render_context_t *context)
     draw_main_surface (context);
     draw_input (context->surface_buf);
     draw_results (context->surface_buf);
+
+    memcpy (context->surface_buf->double_buf, context->surface_buf->buffer,
+            context->surface_buf->stride * context->surface_buf->height);
 
     context->surface_buf->double_buf = context->surface_buf->buffer;
     context->surface_buf->buffer     = tmp_buf;
