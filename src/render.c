@@ -27,11 +27,8 @@ void draw_borders (buffer_t *context);
 void
 blend (const buffer_t *context, const buffer_t *input_buf)
 {
-    uint32_t *buf     = context->buffer;
-    buf              += (context->width * input_buf->y) + input_buf->x;
-    uint32_t *input   = input_buf->buffer;
-    uint8_t (*fg)[4]  = (void *)input;
-    uint8_t (*bg)[4]  = (void *)buf;
+    uint8_t (*bg)[4] = (void *)(context->buffer + (context->width * input_buf->y) + input_buf->x);
+    uint8_t (*fg)[4] = (void *)input_buf->buffer;
 
     uint8_t bg_alpha;
     uint8_t inv_alpha;
