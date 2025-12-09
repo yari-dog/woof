@@ -122,7 +122,8 @@ wl_handle_key (wlc_t *wlc, uint32_t keycode, bool release)
 {
     IN_MESSAGE ("key: %u (%c)", keycode, release ? '^' : 'v');
 
-    if (release)
+    // doing it on keyup fucking sucks ass
+    if (!release)
         xkb_handle_key (wlc->state, keycode);
 }
 void

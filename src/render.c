@@ -123,7 +123,13 @@ draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t h
 
     for (int i = 0; i < width * height; i++)
         *buf++ = color;
-    draw_to_buffer (context, &temp_buf, false);
+
+    bool blend;
+    if (width != context->width && height != context->height)
+        blend = true;
+    else
+        blend = false;
+    draw_to_buffer (context, &temp_buf, blend);
     free (temp_buf.buffer);
 }
 
@@ -230,7 +236,7 @@ void
 draw_results (buffer_t *context)
 {
     buffer_t temp_buf = INIT_BUF (context, WIDTH, (HEIGHT - PADDING - COMMAND_HEIGHT), 0, 0, temp_buf);
-    draw_color_square (&temp_buf, COLOR_BG, temp_buf.width, temp_buf.height, 0, 0);
+    // draw_color_square (&temp_buf, COLOR_BG, temp_buf.width, temp_buf.height, 0, 0);
 
     draw_borders (&temp_buf);
     draw_to_buffer (context, &temp_buf, false);
