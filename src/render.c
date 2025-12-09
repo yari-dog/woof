@@ -34,6 +34,7 @@ blend (const buffer_t *context, const buffer_t *input_buf)
     uint8_t (*bg)[4]  = (void *)buf;
 
     uint8_t bg_alpha;
+    uint8_t inv_alpha;
     for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
         for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
             {
@@ -50,13 +51,12 @@ blend (const buffer_t *context, const buffer_t *input_buf)
                 if (!(*bg)[3])
                     continue;
 
-                // left to be individual because gcc will optimize out a loop and it makes more sense like this
-                // r
-                (*bg)[2] = (((*fg)[2] * (*fg)[3] + (*bg)[2] * bg_alpha * (0xFF - (*fg)[3]) / 0xFF) / (*bg)[3]);
-                // g
-                (*bg)[1] = (((*fg)[1] * (*fg)[3] + (*bg)[1] * bg_alpha * (0xFF - (*fg)[3]) / 0xFF) / (*bg)[3]);
-                // b
-                (*bg)[0] = (((*fg)[0] * (*fg)[3] + (*bg)[0] * bg_alpha * (0xFF - (*fg)[3]) / 0xFF) / (*bg)[3]);
+                // TODO: parelellize? https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+                inv_alpha = 255 - (*fg)[3];
+
+                (*bg)[2] = ((*fg)[3] * (*fg)[2] + inv_alpha * (*bg)[2]) >> 8; // r
+                (*bg)[1] = ((*fg)[3] * (*fg)[1] + inv_alpha * (*bg)[1]) >> 8; // g
+                (*bg)[0] = ((*fg)[3] * (*fg)[0] + inv_alpha * (*bg)[0]) >> 8; // b
             }
 }
 
