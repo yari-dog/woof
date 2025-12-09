@@ -27,44 +27,36 @@ void draw_borders (buffer_t *context);
 void
 blend (const buffer_t *context, const buffer_t *input_buf)
 {
-    uint32_t *buf          = context->buffer;
-    buf                   += (context->width * input_buf->y) + input_buf->x;
-    uint32_t *input        = input_buf->buffer;
-    uint32_t *fg           = input;
-    uint32_t *bg           = buf;
-    uint8_t (*(*fg_a))[4]  = (void *)&fg;
-    uint8_t (*(*bl_a))[4]  = (void *)&bg;
+    uint32_t *buf     = context->buffer;
+    buf              += (context->width * input_buf->y) + input_buf->x;
+    uint32_t *input   = input_buf->buffer;
+    uint8_t (*fg)[4]  = (void *)input;
+    uint8_t (*bg)[4]  = (void *)buf;
 
     uint8_t bg_alpha;
     for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
         for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
             {
-                bg_alpha = (**bl_a)[3];
+                bg_alpha = (*bg)[3];
 
-                if ((**fg_a)[3] == 0xFF || !*bg)
+                if ((*fg)[3] == 0xFF || !*bg)
                     {
-                        *bg = *fg;
+                        memcpy (bg, fg, sizeof (uint32_t));
                         continue;
                     }
 
-                (**bl_a)[3] = (**fg_a)[3] + (bg_alpha * (0xFF - (**fg_a)[3]) / 0xFF);
+                (*bg)[3] = (*fg)[3] + (bg_alpha * (0xFF - (*fg)[3]) / 0xFF);
 
-                if (!(**bl_a)[3])
-                    {
-                        *bg = 0x0;
-                        continue;
-                    }
+                if (!(*bg)[3])
+                    continue;
 
                 // left to be individual because gcc will optimize out a loop and it makes more sense like this
                 // r
-                (**bl_a)[2] = (((**fg_a)[2] * (**fg_a)[3] + (**bl_a)[2] * bg_alpha * (0xFF - (**fg_a)[3]) / 0xFF)
-                               / (**bl_a)[3]);
+                (*bg)[2] = (((*fg)[2] * (*fg)[3] + (*bg)[2] * bg_alpha * (0xFF - (*fg)[3]) / 0xFF) / (*bg)[3]);
                 // g
-                (**bl_a)[1] = (((**fg_a)[1] * (**fg_a)[3] + (**bl_a)[1] * bg_alpha * (0xFF - (**fg_a)[3]) / 0xFF)
-                               / (**bl_a)[3]);
+                (*bg)[1] = (((*fg)[1] * (*fg)[3] + (*bg)[1] * bg_alpha * (0xFF - (*fg)[3]) / 0xFF) / (*bg)[3]);
                 // b
-                (**bl_a)[0] = (((**fg_a)[0] * (**fg_a)[3] + (**bl_a)[0] * bg_alpha * (0xFF - (**fg_a)[3]) / 0xFF)
-                               / (**bl_a)[3]);
+                (*bg)[0] = (((*fg)[0] * (*fg)[3] + (*bg)[0] * bg_alpha * (0xFF - (*fg)[3]) / 0xFF) / (*bg)[3]);
             }
 }
 
