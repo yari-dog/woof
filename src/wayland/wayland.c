@@ -29,7 +29,8 @@ wlc_init_buffer (wlc_t *wlc)
     // make the file
     int fd = create_shm_file (size);
 
-    surface_buf->buffer = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    surface_buf->double_buf = calloc (1, size);
+    surface_buf->buffer     = mmap (NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (surface_buf->buffer == MAP_FAILED)
         die ("fucked up mapping the shmm :\\ sowwy");
 

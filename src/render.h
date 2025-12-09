@@ -19,6 +19,7 @@ typedef struct buffer_t
 {
     uint32_t stride;
     uint32_t *buffer;
+    uint32_t *double_buf;
     uint32_t width;
     uint32_t height;
     int32_t x;

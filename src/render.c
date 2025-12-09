@@ -260,9 +260,19 @@ void
 render (render_context_t *context)
 {
     INFO ("rendering into buffer :3");
+    // double buf swap
+    uint32_t *tmp_buf;
+
+    tmp_buf                          = context->surface_buf->buffer;
+    context->surface_buf->buffer     = context->surface_buf->double_buf;
+    context->surface_buf->double_buf = tmp_buf;
+
     draw_main_surface (context);
     draw_input (context->surface_buf);
     draw_results (context->surface_buf);
+
+    context->surface_buf->double_buf = context->surface_buf->buffer;
+    context->surface_buf->buffer     = tmp_buf;
     // some tests
 #ifdef RENDER_TESTING
     draw_color_square (context->surface_buf, 0xFF282828, 80, 80, 0, 0);
