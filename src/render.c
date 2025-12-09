@@ -52,6 +52,7 @@ blend (const buffer_t *context, const buffer_t *input_buf)
                     continue;
 
                 // TODO: parelellize? https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+                // https://www.daniweb.com/programming/software-development/code/216791/alpha-blend-algorithm
                 inv_alpha = 255 - (*fg)[3];
 
                 (*bg)[2] = ((*fg)[3] * (*fg)[2] + inv_alpha * (*bg)[2]) >> 8; // r
