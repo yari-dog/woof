@@ -37,8 +37,8 @@ blend (const buffer_t *context, const buffer_t *input_buf)
     for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
         for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
             {
+                // TODO: make alpha etc work for big endian systems
                 bg_alpha = (*bg)[3];
-
                 if ((*fg)[3] == 0xFF || !*bg)
                     {
                         memcpy (bg, fg, sizeof (uint32_t));
@@ -64,9 +64,11 @@ blend (const buffer_t *context, const buffer_t *input_buf)
 void
 trim_buf (buffer_t *context, buffer_t *input_buf)
 {
+    // TODO: make this work with negative x and y
     int32_t trim_width  = MIN ((int)context->width - input_buf->x, (int)input_buf->width);
     int32_t trim_height = MIN ((int)context->height - input_buf->y, (int)input_buf->height);
 
+    // if nothing will be visible, just make it do nothing
     if (MIN (0, trim_width) || MIN (0, trim_height))
         {
             input_buf->height = 0;
@@ -74,6 +76,10 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
             return;
         }
 
+    if (trim_width <= context->width && trim_height <= context->height)
+        return;
+
+    INFO ("trimming");
     // this avoids a div/0 error
     uint32_t stride      = context->stride;
     uint32_t trim_stride = context->render_context->color_depth * trim_width;
@@ -190,6 +196,7 @@ draw_str (buffer_t *context, char *str, int cur)
             if (cur && i == (int)cur - 1)
                 cur_y = x, cur_y = y;
         }
+
     // convert the char* from sft to uint32_t*
     buffer_t render_buf       = INIT_BUF (context, context->width, context->height, 0, 0, render_buf);
     uint32_t *render_buf_temp = render_buf.buffer;
