@@ -1,5 +1,4 @@
 #include "exec.h"
-#include "config.h"
 #include "state.h"
 #include "util.h"
 #include <stdint.h>
@@ -19,6 +18,20 @@ exec_cmd (char *cmd)
             die ("bye bye :3");
         }
     return 0;
+}
+
+void
+sort_results (state_t *state)
+{
+}
+
+// how the fuck do i do this lmao
+void
+get_results (state_t *state)
+{
+    state->results = calloc (5, sizeof (result_t));
+
+    sort_results (state);
 }
 
 void

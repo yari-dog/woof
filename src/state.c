@@ -1,4 +1,5 @@
 #include "state.h"
+#include "exec.h"
 #include "render.h"
 #include "util.h"
 #include <stdlib.h>
@@ -16,6 +17,8 @@ init_state ()
     state->cursor         = strlen (state->current_command_string);
     state->render_context = render_init (state);
     state->update         = false;
+
+    get_results (state);
 
     return state;
 }

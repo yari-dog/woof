@@ -5,4 +5,5 @@
 #include <stdint.h>
 void run (state_t *state);
 
+void get_results (state_t *state);
 #endif
