@@ -33,7 +33,6 @@
 #define B 3
 #endif
 
-bool r_char = false;
 void draw_borders (buffer_t *context);
 
 void
@@ -66,7 +65,6 @@ blend (const buffer_t *context, const buffer_t *input_buf)
             }
 }
 
-// TODO: make this work with negative positions ? idk.
 void
 trim_buf (buffer_t *context, buffer_t *input_buf)
 {
@@ -86,8 +84,6 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
         return;
 
     INFO ("trimming");
-    // this avoids a div/0 error
-    uint32_t stride      = context->stride;
     uint32_t trim_stride = context->render_context->color_depth * trim_width;
 
     uint32_t *temp_buf = calloc (1, trim_height * trim_stride);
@@ -105,12 +101,12 @@ void
 draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
 {
     // will it go off the edge ?
-    // if so, trim it up :3
     trim_buf (context, input_buf);
 
     if (input_buf->height == 0 || input_buf->height == 0)
         return;
 
+    // call with should_blend=true if transparency is likely
     if (should_blend)
         blend (context, input_buf);
     else
@@ -128,22 +124,8 @@ draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t h
     for (int i = 0; i < width * height; i++)
         *buf++ = color;
 
-    bool blend;
-    if (width != context->width && height != context->height)
-        blend = true;
-    else
-        blend = false;
-    draw_to_buffer (context, &temp_buf, blend);
+    draw_to_buffer (context, &temp_buf, width != context->width && height != context->height);
     free (temp_buf.buffer);
-}
-
-// TODO: also make this work. i think that im fuckin shit up somewhere
-void
-draw_main_surface (render_context_t *context)
-{
-    // set surface to be transparent first.
-    memset (context->surface_buf->buffer, 0x00, context->surface_buf->stride * context->surface_buf->height);
-    // draw_color_square (context, surface_buf, 0x1a2b3c4d, context->width, context->height, 0, 0);
 }
 
 void
@@ -347,11 +329,10 @@ render_init (state_t *state)
     double_buf->x              = 0;
     double_buf->y              = 0;
     double_buf->render_context = context;
+
     // font shit
     SFT *sft = calloc (1, sizeof (SFT));
-
     get_font (sft);
-
     context->sft = sft;
 
     return context;
