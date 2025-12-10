@@ -323,12 +323,9 @@ render_init (state_t *state)
     surface_buf->y              = 0;
     surface_buf->render_context = context;
 
-    context->double_buf        = double_buf;
-    double_buf->height         = HEIGHT;
-    double_buf->width          = WIDTH;
-    double_buf->x              = 0;
-    double_buf->y              = 0;
-    double_buf->render_context = context;
+    memcpy (double_buf, surface_buf, sizeof (buffer_t));
+
+    context->double_buf = double_buf;
 
     // font shit
     SFT *sft = calloc (1, sizeof (SFT));
