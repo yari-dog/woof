@@ -132,7 +132,7 @@ draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t h
 void
 draw_cur (buffer_t *context, int x, int y)
 {
-    draw_color_square (context, 0xFFEBDBB2, 2, 18, x, y);
+    draw_color_square (context, COLOR_FG, 2, 18, x, y);
     // could simply invert the buffer colors with some sorta bit masking ?
 }
 
@@ -190,7 +190,7 @@ draw_str (buffer_t *context, char *str, int cur)
     buffer_t render_buf       = INIT_BUF (context, context->width, context->height, 0, 0, render_buf);
     uint32_t *render_buf_temp = render_buf.buffer;
     for (int i = 0; i < context->width * context->height; ++i)
-        *render_buf_temp++ = *string_buf_temp++ << 24 | 0xEBDBB2;
+        *render_buf_temp++ = *string_buf_temp++ << 24 | (COLOR_FG & 0xFFFFFF); // last bit is take out the alpha
 
     draw_cur (&render_buf, x, y);
     free (string_buf);
