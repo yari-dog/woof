@@ -30,28 +30,28 @@ blend (const buffer_t *context, const buffer_t *input_buf)
     uint8_t (*bg)[4] = (void *)(context->buffer + (context->width * input_buf->y) + input_buf->x);
     uint8_t (*fg)[4] = (void *)input_buf->buffer;
 
-    uint8_t bg_alpha;
     uint8_t inv_alpha;
     for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
         for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
             {
-                // TODO: make alpha etc work for big endian systems
-                bg_alpha = (*bg)[3];
+                if (!(*fg)[3])
+                    continue;
+
+                // TODO: remove this if?
+                // removing it speeds up blend by 1%
+                // but slows draw_color_square by 1%
                 if ((*fg)[3] == 0xFF || !*bg)
                     {
                         memcpy (bg, fg, sizeof (uint32_t));
                         continue;
                     }
 
-                (*bg)[3] = (*fg)[3] + (bg_alpha * (0xFF - (*fg)[3]) / 0xFF);
-
-                if (!(*bg)[3])
-                    continue;
-
                 // TODO: parelellize? https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
                 // https://www.daniweb.com/programming/software-development/code/216791/alpha-blend-algorithm
                 inv_alpha = 255 - (*fg)[3];
 
+                // TODO: make this shit work for big endian
+                (*bg)[3] = (*fg)[3] + ((*bg)[3] * inv_alpha >> 8);            // a
                 (*bg)[2] = ((*fg)[3] * (*fg)[2] + inv_alpha * (*bg)[2]) >> 8; // r
                 (*bg)[1] = ((*fg)[3] * (*fg)[1] + inv_alpha * (*bg)[1]) >> 8; // g
                 (*bg)[0] = ((*fg)[3] * (*fg)[0] + inv_alpha * (*bg)[0]) >> 8; // b
