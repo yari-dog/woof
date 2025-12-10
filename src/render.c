@@ -49,9 +49,6 @@ blend (const buffer_t *context, const buffer_t *input_buf)
                 if (!(*fg)[A])
                     continue;
 
-                // TODO: remove this if?
-                // removing it speeds up blend by 1%
-                // but slows draw_color_square by 1%
                 if ((*fg)[A] == 0xFF || !*bg)
                     {
                         memcpy (bg, fg, sizeof (uint32_t));
