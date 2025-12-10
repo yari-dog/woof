@@ -48,7 +48,7 @@ blend (const buffer_t *context, const buffer_t *input_buf)
                 if (!(*fg)[A])
                     continue;
 
-                if ((*fg)[A] == 0xFF || !*bg)
+                if (!(*bg)[A] || 0xFF == (*fg)[A])
                     {
                         memcpy (bg, fg, sizeof (uint32_t));
                         continue;
