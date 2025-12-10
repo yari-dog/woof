@@ -8,9 +8,9 @@
 typedef struct xkb_t
 {
     // xkb info
-    struct xkb_context *context;
-    struct xkb_keymap *keymap;
-    struct xkb_state *state;
+    struct xkb_context *kb_context;
+    struct xkb_keymap *kb_keymap;
+    struct xkb_state *kb_state;
 
     // info for handling qq for quit
     int64_t time_of_last_key;

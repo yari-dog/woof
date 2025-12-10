@@ -3,6 +3,7 @@
 #include "../render.h"
 #include "../state.h"
 #include "../util.h"
+#include "../woof.h"
 #include "../xkb.h"
 #include "wayland.h"
 #include <sys/mman.h>
@@ -57,8 +58,8 @@ zwlr_layer_surface_config_handler (void *userdata, struct zwlr_layer_surface_v1 
     wlc_t *wlc = (struct wlc_t *)userdata;
 
     if (wlc->configured
-        || (width != wlc->state->render_context->surface_buf->width
-            || height != wlc->state->render_context->surface_buf->height))
+        || (width != g_woof->state->render_context->surface_buf->width
+            || height != g_woof->state->render_context->surface_buf->height))
         wlc_set_size (wlc, width, height);
 
     zwlr_layer_surface_v1_ack_configure (surface, serial);
@@ -71,8 +72,8 @@ void
 zwlr_layer_surface_close_handler (void *userdata, struct zwlr_layer_surface_v1 *surface)
 {
     IN_MESSAGE ("zwlr_layer_surface_close :3");
-    wlc_t *wlc        = (struct wlc_t *)userdata;
-    wlc->state->close = true;
+    wlc_t *wlc           = (struct wlc_t *)userdata;
+    g_woof->state->close = true;
 }
 
 void
@@ -112,7 +113,7 @@ wl_keyboard_keymap_handler (void *userdata, struct wl_keyboard *keyboard, uint32
     if (format_map == MAP_FAILED)
         die ("xkb format map failed :(");
 
-    xkb_set_keymap (wlc->state->xkb, format_map);
+    xkb_set_keymap (g_woof->state->xkb, format_map);
 
     munmap (format_map, size);
     close (fd);
@@ -124,7 +125,7 @@ wl_handle_key (wlc_t *wlc, uint32_t keycode, bool release)
 
     // doing it on keyup fucking sucks ass
     if (!release)
-        xkb_handle_key (wlc->state, keycode);
+        xkb_handle_key (g_woof->state, keycode);
 }
 void
 wl_keyboard_enter_handler (void *userdata, struct wl_keyboard *keyboard, uint32_t serial, struct wl_surface *surface,
@@ -160,9 +161,7 @@ wl_keyboard_modifiers_handler (void *userdata, struct wl_keyboard *keyboard, uin
                                uint32_t mods_latched, uint32_t mods_locked, uint32_t group)
 {
     IN_MESSAGE ("mods locked");
-    wlc_t *wlc = (struct wlc_t *)userdata;
-
-    xkb_state_update_mask (wlc->state->xkb->state, mods_depressed, mods_latched, mods_locked, 0, 0, group);
+    xkb_state_update_mask (g_woof->state->xkb->kb_state, mods_depressed, mods_latched, mods_locked, 0, 0, group);
 }
 void
 wl_keyboard_repeat_info_handler (void *userdata, struct wl_keyboard *keyboard, int32_t rate, int32_t delay)

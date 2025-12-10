@@ -124,7 +124,7 @@ xkb_handle_key (state_t *state, uint32_t keycode)
     int64_t current_time = ms_since_epoch ();
 
     xkb_t *xkb       = state->xkb;
-    xkb_keysym_t sym = xkb_state_key_get_one_sym (xkb->state, keycode);
+    xkb_keysym_t sym = xkb_state_key_get_one_sym (xkb->kb_state, keycode);
 
     char buf[8];
     switch (sym)
@@ -167,21 +167,21 @@ void
 xkb_set_state (xkb_t *xkb)
 {
     INFO ("xkb_set_state");
-    if (xkb->state)
-        xkb_state_unref (xkb->state);
+    if (xkb->kb_state)
+        xkb_state_unref (xkb->kb_state);
 
-    xkb->state = xkb_state_new (xkb->keymap);
+    xkb->kb_state = xkb_state_new (xkb->kb_keymap);
 }
 
 void
 xkb_set_keymap (xkb_t *xkb, char *keymap_str)
 {
     INFO ("xkb_set_keymap");
-    if (xkb->keymap)
-        xkb_keymap_unref (xkb->keymap);
+    if (xkb->kb_keymap)
+        xkb_keymap_unref (xkb->kb_keymap);
 
-    xkb->keymap
-        = xkb_keymap_new_from_string (xkb->context, keymap_str, XKB_KEYMAP_FORMAT_TEXT_V1, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    xkb->kb_keymap = xkb_keymap_new_from_string (xkb->kb_context, keymap_str, XKB_KEYMAP_FORMAT_TEXT_V1,
+                                                 XKB_KEYMAP_COMPILE_NO_FLAGS);
 
     xkb_set_state (xkb);
 }
@@ -190,7 +190,7 @@ xkb_set_keymap (xkb_t *xkb, char *keymap_str)
 xkb_t *
 xkb_init ()
 {
-    xkb_t *xkb   = calloc (1, sizeof (xkb_t));
-    xkb->context = xkb_context_new (XKB_CONTEXT_NO_FLAGS);
+    xkb_t *xkb      = calloc (1, sizeof (xkb_t));
+    xkb->kb_context = xkb_context_new (XKB_CONTEXT_NO_FLAGS);
     return xkb;
 }

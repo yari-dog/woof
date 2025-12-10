@@ -31,8 +31,6 @@ typedef struct wlc_t
     struct wl_keyboard *keyboard;
     struct wl_pointer *pointer;
 
-    // other
-    struct state_t *state;
     bool configured;
 } wlc_t;
 

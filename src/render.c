@@ -2,6 +2,7 @@
 #include "config.h"
 #include "state.h"
 #include "util.h"
+#include "woof.h"
 #include <fontconfig/fontconfig.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -200,8 +201,8 @@ draw_str (buffer_t *context, char *str, int cur)
 void
 draw_command_str (buffer_t *context)
 {
-    char *str = context->render_context->state->current_command_string;
-    int cur   = context->render_context->state->cursor;
+    char *str = g_woof->state->current_command_string;
+    int cur   = g_woof->state->cursor;
 
     draw_str (context, str, cur);
 }
@@ -268,7 +269,7 @@ render (render_context_t *context)
     draw_checkerboard (context->surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 860, 700); // shouldn't draw at all
     draw_checkerboard (context->surface_buf, 0xFF282828, 0xFFFFFFFF, 80, 80, 760, 360); // should half-draw
 #endif
-    context->state->update = false;
+    g_woof->state->update = false;
     INFO ("rendered into buffer ");
 }
 
@@ -314,7 +315,6 @@ render_init (state_t *state)
     render_context_t *context   = calloc (1, sizeof (render_context_t));
     buffer_t *surface_buf       = calloc (1, sizeof (buffer_t));
     buffer_t *double_buf        = calloc (1, sizeof (buffer_t));
-    context->state              = state;
     context->color_depth        = COLOR_DEPTH;
     context->surface_buf        = surface_buf;
     surface_buf->height         = HEIGHT;

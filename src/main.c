@@ -1,23 +1,25 @@
 #include "util.h"
 #include "woof.h"
 
+woof_t *g_woof;
+
 int
 main ()
 {
     // build initial data structure for woof, including abstracting windowing server
-    woof_t *woof = init_woof ();
-    woof->start (woof->state);
+    g_woof = init_woof ();
+    g_woof->start (g_woof->state);
 
     int64_t start_time = ms_since_epoch ();
 
     // main loop. entry etc etc etc
-    while (!woof->state->close)
+    while (!g_woof->state->close)
         if (ms_since_epoch () - start_time < 20) // you don't need more than 50fps on a menu
             {
-                woof->main_loop (woof->state);
+                g_woof->main_loop (g_woof->state);
                 start_time = ms_since_epoch ();
             }
 
     // function that handles shutting down gracefully
-    destroy_woof (woof);
+    destroy_woof (g_woof);
 }

@@ -4,6 +4,7 @@
 #include "../render.h"
 #include "../state.h"
 #include "../util.h"
+#include "../woof.h"
 #include "wayland-listeners.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -20,7 +21,7 @@ void wlc_set_title (wlc_t *wlc, char *title, int size);
 void
 wlc_init_buffer (wlc_t *wlc)
 {
-    render_context_t *render_context = wlc->state->render_context;
+    render_context_t *render_context = g_woof->state->render_context;
     buffer_t *surface_buf            = render_context->surface_buf;
     INFO ("initing buffer %u %u", surface_buf->width, surface_buf->height);
 
@@ -42,13 +43,13 @@ wlc_init_buffer (wlc_t *wlc)
     wl_shm_pool_destroy (wlc->shm_pool);
     close (fd);
 
-    INFO ("%s buffed size: %ux%u", wlc->state->title, surface_buf->width, surface_buf->height);
+    INFO ("%s buffed size: %ux%u", g_woof->state->title, surface_buf->width, surface_buf->height);
 }
 
 void
 wlc_wipe_buffer (wlc_t *wlc)
 {
-    render_context_t *render_context = wlc->state->render_context;
+    render_context_t *render_context = g_woof->state->render_context;
     buffer_t *surface_buf            = render_context->surface_buf;
 
     if (surface_buf->buffer)
@@ -62,7 +63,7 @@ void
 wlc_set_surface (wlc_t *wlc)
 {
     int64_t start_time               = ms_since_epoch ();
-    render_context_t *render_context = wlc->state->render_context;
+    render_context_t *render_context = g_woof->state->render_context;
     render (render_context);
 
     buffer_t *surface_buf = render_context->surface_buf;
@@ -82,7 +83,7 @@ wlc_set_surface (wlc_t *wlc)
 void
 wlc_set_size (wlc_t *wlc, uint32_t width, uint32_t height)
 {
-    render_context_t *render_context = wlc->state->render_context;
+    render_context_t *render_context = g_woof->state->render_context;
     buffer_t *surface_buf            = render_context->surface_buf;
 
     if (width)
@@ -92,7 +93,7 @@ wlc_set_size (wlc_t *wlc, uint32_t width, uint32_t height)
     surface_buf->stride = surface_buf->width * render_context->color_depth; // TODO: change from hardcoded sludge
                                                                             // if (wlc->zwlr_layer_surface)
     zwlr_layer_surface_v1_set_size (wlc->zwlr_layer_surface, surface_buf->width, surface_buf->height);
-    INFO ("%s resized size: %ux%u", wlc->state->title, surface_buf->width, surface_buf->height);
+    INFO ("%s resized size: %ux%u", g_woof->state->title, surface_buf->width, surface_buf->height);
 }
 
 void
@@ -104,10 +105,10 @@ wlc_resize_handler (wlc_t *wlc, uint32_t width, uint32_t height)
 
     buffer_t *temp_buf;
     // build double buffer
-    temp_buf                                = wlc->state->render_context->surface_buf;
-    wlc->state->render_context->surface_buf = wlc->state->render_context->double_buf;
-    wlc->state->render_context->double_buf  = temp_buf;
-    wlc->double_buf                         = wlc->buffer;
+    temp_buf                                   = g_woof->state->render_context->surface_buf;
+    g_woof->state->render_context->surface_buf = g_woof->state->render_context->double_buf;
+    g_woof->state->render_context->double_buf  = temp_buf;
+    wlc->double_buf                            = wlc->buffer;
 
     wlc_set_size (wlc, temp_buf->width, temp_buf->height);
 
@@ -125,7 +126,7 @@ wlc_make_surfaces (wlc_t *wlc)
 
     // wlr-layer-shell-unstable-v1
     wlc->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface (
-        wlc->zwlr_layer_shell, wlc->surface, wlc->output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, wlc->state->title);
+        wlc->zwlr_layer_shell, wlc->surface, wlc->output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, g_woof->state->title);
     wlc_set_size (wlc, 0, 0);
     zwlr_layer_surface_v1_set_anchor (wlc->zwlr_layer_surface,
                                       ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT);
@@ -142,13 +143,13 @@ wlc_make_surfaces (wlc_t *wlc)
 void
 wlc_set_title (wlc_t *wlc, char *title, int size)
 {
-    if (wlc->state->title)
-        free (wlc->state->title);
+    if (g_woof->state->title)
+        free (g_woof->state->title);
 
     char *title_buf = malloc (size);
     strcpy (title_buf, title);
-    wlc->state->title = title_buf;
-    INFO ("title set: %s", wlc->state->title);
+    g_woof->state->title = title_buf;
+    INFO ("title set: %s", g_woof->state->title);
 }
 
 wlc_t *
