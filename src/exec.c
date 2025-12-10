@@ -26,6 +26,7 @@ sort_results (state_t *state)
 }
 
 // how the fuck do i do this lmao
+// i think if i check the dirs in $XDG_DATA_DIRS for applications/*.desktop that should work
 void
 get_results (state_t *state)
 {
