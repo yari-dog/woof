@@ -21,6 +21,18 @@
         .render_context = CONTEXT->render_context,                                                                     \
     };
 
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define A 3
+#define R 2
+#define G 1
+#define B 0
+#else
+#define A 0
+#define R 1
+#define G 2
+#define B 3
+#endif
+
 bool r_char = false;
 void draw_borders (buffer_t *context);
 
@@ -34,13 +46,13 @@ blend (const buffer_t *context, const buffer_t *input_buf)
     for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
         for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
             {
-                if (!(*fg)[3])
+                if (!(*fg)[A])
                     continue;
 
                 // TODO: remove this if?
                 // removing it speeds up blend by 1%
                 // but slows draw_color_square by 1%
-                if ((*fg)[3] == 0xFF || !*bg)
+                if ((*fg)[A] == 0xFF || !*bg)
                     {
                         memcpy (bg, fg, sizeof (uint32_t));
                         continue;
@@ -48,13 +60,12 @@ blend (const buffer_t *context, const buffer_t *input_buf)
 
                 // TODO: parelellize? https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
                 // https://www.daniweb.com/programming/software-development/code/216791/alpha-blend-algorithm
-                inv_alpha = 255 - (*fg)[3];
+                inv_alpha = 255 - (*fg)[A];
 
-                // TODO: make this shit work for big endian
-                (*bg)[3] = (*fg)[3] + ((*bg)[3] * inv_alpha >> 8);            // a
-                (*bg)[2] = ((*fg)[3] * (*fg)[2] + inv_alpha * (*bg)[2]) >> 8; // r
-                (*bg)[1] = ((*fg)[3] * (*fg)[1] + inv_alpha * (*bg)[1]) >> 8; // g
-                (*bg)[0] = ((*fg)[3] * (*fg)[0] + inv_alpha * (*bg)[0]) >> 8; // b
+                (*bg)[A] = (*fg)[A] + ((*bg)[A] * inv_alpha >> 8);            // a
+                (*bg)[R] = ((*fg)[A] * (*fg)[R] + inv_alpha * (*bg)[R]) >> 8; // r
+                (*bg)[G] = ((*fg)[A] * (*fg)[G] + inv_alpha * (*bg)[G]) >> 8; // g
+                (*bg)[B] = ((*fg)[A] * (*fg)[B] + inv_alpha * (*bg)[B]) >> 8; // b
             }
 }
 
