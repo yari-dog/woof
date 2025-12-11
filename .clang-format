@@ -1,7 +1,7 @@
 BasedOnStyle: GNU 
 AlignConsecutiveAssignments:
   Enabled: true
-  AcrossEmptyLines: false
+  AcrossEmptyLines: true
   AcrossComments: false
   AlignCompound: true
 AlignConsecutiveMacros: true
