@@ -36,7 +36,7 @@
 
 void draw_borders (buffer_t *context);
 
-void
+static void
 blend (const buffer_t *context, const buffer_t *input_buf)
 {
     uint8_t (*bg)[4] = (void *)(context->buffer + (context->width * input_buf->y) + input_buf->x);
@@ -66,7 +66,7 @@ blend (const buffer_t *context, const buffer_t *input_buf)
             }
 }
 
-void
+static void
 trim_buf (buffer_t *context, buffer_t *input_buf)
 {
 
@@ -99,7 +99,7 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
     input_buf->height = trim_height;
 }
 
-void
+static void
 draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
 {
     // will it go off the edge ?
@@ -117,7 +117,7 @@ draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
                     &input_buf->buffer[i * input_buf->width], input_buf->stride);
 }
 
-void
+static void
 draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t height, int32_t x, int32_t y)
 {
     buffer_t temp_buf = INIT_BUF (context, width, height, x, y, temp_buf);
@@ -130,14 +130,14 @@ draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t h
     free (temp_buf.buffer);
 }
 
-void
+static void
 draw_cur (buffer_t *context, int x, int y)
 {
     draw_color_square (context, COLOR_FG, 2, 1 * FONT_SCALE, x, y);
     // could simply invert the buffer colors with some sorta bit masking ?
 }
 
-void
+static void
 draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t height, uint32_t width, int32_t *x)
 {
     SFT_Glyph gid;
@@ -169,7 +169,7 @@ draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t height, uint
     *x += mtx.advanceWidth;
 }
 
-void
+static void
 draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int cur)
 {
     int32_t cur_x, cur_y;
@@ -202,7 +202,7 @@ draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int
     free (render_buf.buffer);
 }
 
-void
+static void
 draw_command_str (buffer_t *context)
 {
     char *str = g_woof->state->current_command_string;
@@ -213,7 +213,7 @@ draw_command_str (buffer_t *context)
     draw_str (context, str, context->height, context->width, x, y, cur);
 }
 
-void
+static void
 draw_input (buffer_t *context)
 {
     buffer_t temp_buf = INIT_BUF (context, WIDTH, COMMAND_HEIGHT, 0, HEIGHT - COMMAND_HEIGHT, temp_buf);
@@ -226,7 +226,7 @@ draw_input (buffer_t *context)
     free (temp_buf.buffer);
 }
 
-void
+static void
 draw_results (buffer_t *context)
 {
     buffer_t temp_buf = INIT_BUF (context, WIDTH, (HEIGHT - PADDING - COMMAND_HEIGHT), 0, 0, temp_buf);
@@ -262,6 +262,7 @@ draw_borders (buffer_t *context)
                        context->height - BORDER_WIDTH); // bottom
     draw_color_square (context, BORDER_COLOR, BORDER_WIDTH, context->height, context->width - BORDER_WIDTH, 0); // right
 }
+
 void
 render (render_context_t *context)
 {
@@ -291,7 +292,7 @@ render (render_context_t *context)
     INFO ("rendered into buffer ");
 }
 
-void
+static void
 get_font (SFT *sft)
 {
     sft->xScale = FONT_SCALE;

@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-uint8_t
+static uint8_t
 exec_cmd (char *cmd)
 {
     char *argv[] = { "/bin/sh", "-c", cmd, NULL };
@@ -23,7 +23,7 @@ exec_cmd (char *cmd)
     return 0;
 }
 
-void
+static void
 sort_results (state_t *state)
 // make a linked list of all matching results from array of all ?
 {

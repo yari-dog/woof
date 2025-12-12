@@ -11,7 +11,7 @@
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include <xkbcommon/xkbcommon.h>
 
-size_t
+static size_t
 next_rune (state_t *state, int n)
 {
     // i stole ts entirely from mew
@@ -22,7 +22,7 @@ next_rune (state_t *state, int n)
     return i;
 }
 
-void
+static void
 move_cursor (state_t *state, size_t n)
 {
     if (state->cursor + n <= 0)
@@ -33,7 +33,7 @@ move_cursor (state_t *state, size_t n)
     state->cursor += n;
 }
 
-void
+static void
 expand_command_str_buf (state_t *state, ssize_t n)
 {
 
@@ -54,7 +54,7 @@ expand_command_str_buf (state_t *state, ssize_t n)
 }
 
 // TODO: is the memory management here atrocious
-void
+static void
 insert (state_t *state, char *text, ssize_t n)
 {
     // check if backspace will put cursor into the negative
@@ -82,7 +82,7 @@ insert (state_t *state, char *text, ssize_t n)
     move_cursor (state, n);
 }
 
-bool
+static bool
 xkb_handle_quick_double_key (state_t *state, clock_t current_time, char *buf)
 {
     xkb_t *xkb = state->xkb;
@@ -123,8 +123,8 @@ xkb_handle_key (state_t *state, uint32_t keycode)
 {
     int64_t current_time = ms_since_epoch ();
 
-    xkb_t *xkb       = state->xkb;
-    xkb_keysym_t sym = xkb_state_key_get_one_sym (xkb->kb_state, keycode);
+    xkb_t *xkb           = state->xkb;
+    xkb_keysym_t sym     = xkb_state_key_get_one_sym (xkb->kb_state, keycode);
 
     char buf[8];
     switch (sym)

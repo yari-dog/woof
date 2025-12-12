@@ -16,9 +16,9 @@
 #include <unistd.h>
 #include <wayland-client.h>
 
-void wlc_set_title (wlc_t *wlc, char *title, int size);
+static void wlc_set_title (wlc_t *wlc, char *title, int size);
 
-void
+static void
 wlc_init_buffer (wlc_t *wlc)
 {
     render_context_t *render_context = g_woof->state->render_context;
@@ -46,7 +46,7 @@ wlc_init_buffer (wlc_t *wlc)
     INFO ("%s buffed size: %ux%u", g_woof->state->title, surface_buf->width, surface_buf->height);
 }
 
-void
+static void
 wlc_wipe_buffer (wlc_t *wlc)
 {
     render_context_t *render_context = g_woof->state->render_context;
@@ -59,14 +59,14 @@ wlc_wipe_buffer (wlc_t *wlc)
         }
 }
 
-void
+static void
 wlc_set_surface (wlc_t *wlc)
 {
     int64_t start_time               = ms_since_epoch ();
     render_context_t *render_context = g_woof->state->render_context;
     render (render_context);
 
-    buffer_t *surface_buf = render_context->surface_buf;
+    buffer_t *surface_buf      = render_context->surface_buf;
 
     struct wl_buffer *temp_buf = wlc->buffer;
     wlc->buffer                = wlc->double_buf;
@@ -117,7 +117,7 @@ wlc_resize_handler (wlc_t *wlc, uint32_t width, uint32_t height)
     wlc_set_surface (wlc);
 }
 
-void
+static void
 wlc_make_surfaces (wlc_t *wlc)
 {
     INFO ("making surfaces");
@@ -140,7 +140,7 @@ wlc_make_surfaces (wlc_t *wlc)
     INFO ("surface commit");
 }
 
-void
+static void
 wlc_set_title (wlc_t *wlc, char *title, int size)
 {
     if (g_woof->state->title)
