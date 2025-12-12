@@ -302,7 +302,7 @@ get_font (SFT *sft)
     // get font file dir
     FcConfig *config = FcInitLoadConfigAndFonts ();
     // not working rn ??
-    FcPattern *pat = FcNameParse ((const FcChar8 *)("Sarasa Term J Nerd Font"));
+    FcPattern *pat = FcNameParse ((const FcChar8 *)(FONT_NAME));
     FcConfigSubstitute (config, pat, FcMatchPattern);
     FcDefaultSubstitute (pat);
 

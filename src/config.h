@@ -22,5 +22,6 @@
 
 #define DOUBLEKEYLIMIT 100 // in ms
 
+#define FONT_NAME  "Sarasa Term J Nerd Font"
 #define FONT_SCALE 18
 #endif
