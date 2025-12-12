@@ -1,4 +1,3 @@
-#include "util.h"
 #include "woof.h"
 
 woof_t *g_woof;

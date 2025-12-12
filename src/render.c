@@ -99,6 +99,9 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
     input_buf->height = trim_height;
 }
 
+// should_blend exists because tbh there's not much point doing some fancy test
+// we'll know if something will have < FF alpha (because its text)
+// idk how to overload function definitions
 static void
 draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
 {

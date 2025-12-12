@@ -27,7 +27,7 @@ init_woof ()
      * such as the function for the main loop logic. this means that main() can be x/wayland agnostic
      */
     INFO ("woof initiating :o");
-    g_woof                  = calloc (1, sizeof (woof_t));
+    g_woof                  = (woof_t *)calloc (1, sizeof (woof_t));
 
     state_t *state          = init_state ();
     g_woof->state           = state;
