@@ -1,7 +1,5 @@
 #include "woof.h"
 
-woof_t *g_woof;
-
 int
 main ()
 {
