@@ -12,7 +12,7 @@
 #define WIDTH          800
 #define HEIGHT         400
 #define MARGIN         0
-#define COMMAND_HEIGHT 32
+#define COMMAND_HEIGHT 32 // 32
 #define PADDING        15
 #define BORDER_WIDTH   2
 
@@ -21,4 +21,6 @@
 #define TITLE ":woof"
 
 #define DOUBLEKEYLIMIT 100 // in ms
+
+#define FONT_SCALE 18
 #endif

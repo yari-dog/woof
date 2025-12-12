@@ -59,19 +59,20 @@ blend (const buffer_t *context, const buffer_t *input_buf)
                 // https://www.daniweb.com/programming/software-development/code/216791/alpha-blend-algorithm
                 inv_alpha = 255 - (*fg)[A];
 
-                (*bg)[A] = (*fg)[A] + ((*bg)[A] * inv_alpha >> 8);            // a
-                (*bg)[R] = ((*fg)[A] * (*fg)[R] + inv_alpha * (*bg)[R]) >> 8; // r
-                (*bg)[G] = ((*fg)[A] * (*fg)[G] + inv_alpha * (*bg)[G]) >> 8; // g
-                (*bg)[B] = ((*fg)[A] * (*fg)[B] + inv_alpha * (*bg)[B]) >> 8; // b
+                (*bg)[A]  = (*fg)[A] + ((*bg)[A] * inv_alpha >> 8);            // a
+                (*bg)[R]  = ((*fg)[A] * (*fg)[R] + inv_alpha * (*bg)[R]) >> 8; // r
+                (*bg)[G]  = ((*fg)[A] * (*fg)[G] + inv_alpha * (*bg)[G]) >> 8; // g
+                (*bg)[B]  = ((*fg)[A] * (*fg)[B] + inv_alpha * (*bg)[B]) >> 8; // b
             }
 }
 
 void
 trim_buf (buffer_t *context, buffer_t *input_buf)
 {
+
     // TODO: make this work with negative x and y
-    int32_t trim_width  = MIN ((int)context->width - input_buf->x, (int)input_buf->width);
-    int32_t trim_height = MIN ((int)context->height - input_buf->y, (int)input_buf->height);
+    int32_t trim_width  = MIN ((int)context->width - (int)input_buf->x, (int)input_buf->width);
+    int32_t trim_height = MIN ((int)context->height - (int)input_buf->y, (int)input_buf->height);
 
     // if nothing will be visible, just make it do nothing
     if (MIN (0, trim_width) || MIN (0, trim_height))
@@ -81,13 +82,13 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
             return;
         }
 
-    if (trim_width <= context->width && trim_height <= context->height)
+    if (trim_width >= input_buf->width && trim_height >= input_buf->height)
         return;
 
     INFO ("trimming");
     uint32_t trim_stride = context->render_context->color_depth * trim_width;
 
-    uint32_t *temp_buf = calloc (1, trim_height * trim_stride);
+    uint32_t *temp_buf   = calloc (1, trim_height * trim_stride);
     for (int i = 0; i < trim_height; ++i)
         memcpy (&temp_buf[(i * trim_width)], &input_buf->buffer[(i * input_buf->width)], trim_stride);
 
@@ -132,12 +133,12 @@ draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t h
 void
 draw_cur (buffer_t *context, int x, int y)
 {
-    draw_color_square (context, COLOR_FG, 2, 18, x, y);
+    draw_color_square (context, COLOR_FG, 2, 1 * FONT_SCALE, x, y);
     // could simply invert the buffer colors with some sorta bit masking ?
 }
 
 void
-draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t width, uint32_t height, int32_t *x, int32_t *y)
+draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t height, uint32_t width, int32_t *x)
 {
     SFT_Glyph gid;
     if (sft_lookup (sft, chr, &gid) < 0)
@@ -158,10 +159,9 @@ draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t width, uint3
     if (sft_render (sft, gid, img) < 0)
         die ("failed to render glyph :o");
 
-    *x += mtx.leftSideBearing;
+    *x        += mtx.leftSideBearing;
 
-    char *buf = &string_buf[(*y + (height / 2 + mtx.yOffset)) * width];
-
+    char *buf  = &string_buf[(FONT_SCALE + mtx.yOffset) * width];
     // this placement does not account for overflowing the visual bounds of the input buffer
     for (int i = 0; i < img.height; ++i)
         memcpy (&buf[(i * width) + *x], &pixels[i * img.width], img.width);
@@ -170,29 +170,33 @@ draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t width, uint3
 }
 
 void
-draw_str (buffer_t *context, char *str, int cur)
+draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int cur)
 {
-    int32_t x, y, cur_x, cur_y;
-    x = PADDING;
-    y = (context->height - 18) / 2;
+    int32_t cur_x, cur_y;
+    int32_t t_x           = 0;
+    int32_t t_y           = 0;
 
-    char *string_buf      = calloc (1, context->width * context->height);
+    char *string_buf      = calloc (1, width * height);
     char *string_buf_temp = string_buf;
 
     for (int i = 0; i < strlen (str); i++)
         {
-            draw_character (context->render_context->sft, string_buf, str[i], context->width, context->height, &x, &y);
-            if (cur && i == (int)cur - 1)
-                cur_y = x, cur_y = y;
+            draw_character (context->render_context->sft, string_buf, str[i], height, width, &t_x);
+            if (i == (int)cur - 1)
+                cur_y = t_x, cur_y = t_y;
         }
 
     // convert the char* from sft to uint32_t*
-    buffer_t render_buf       = INIT_BUF (context, context->width, context->height, 0, 0, render_buf);
+    // // -10 12
+    buffer_t render_buf       = INIT_BUF (context, width, height, x, y, render_buf);
     uint32_t *render_buf_temp = render_buf.buffer;
-    for (int i = 0; i < context->width * context->height; ++i)
+    // TODO: overrun
+    for (int i = 0; i < width * height; ++i)
         *render_buf_temp++ = *string_buf_temp++ << 24 | (COLOR_FG & 0xFFFFFF); // last bit is take out the alpha
 
-    draw_cur (&render_buf, x, y);
+    if (cur)
+        draw_cur (&render_buf, t_x, t_y + (FONT_SCALE / 4));
+
     free (string_buf);
     draw_to_buffer (context, &render_buf, true);
     free (render_buf.buffer);
@@ -204,7 +208,9 @@ draw_command_str (buffer_t *context)
     char *str = g_woof->state->current_command_string;
     int cur   = g_woof->state->cursor;
 
-    draw_str (context, str, cur);
+    int x     = PADDING / 2;
+    int y     = (context->height / 2) - (3 * FONT_SCALE / 4);
+    draw_str (context, str, context->height, context->width, x, y, cur);
 }
 
 void
@@ -227,9 +233,21 @@ draw_results (buffer_t *context)
     draw_color_square (&temp_buf, COLOR_BG, temp_buf.width, temp_buf.height, 0, 0);
 
     draw_borders (&temp_buf);
+
+    int x, y;
+
+    x                  = PADDING;
+    y                  = PADDING;
+
+    result_t **results = g_woof->state->results;
+    for (int i = 0; i < g_woof->state->result_count && y < temp_buf.height - PADDING; i++, results++)
+        {
+            draw_str (&temp_buf, (*results)->path, COMMAND_HEIGHT, WIDTH, PADDING, y, 0);
+            y += COMMAND_HEIGHT + PADDING;
+        }
+
     draw_to_buffer (context, &temp_buf, false);
     free (temp_buf.buffer);
-    // TODO: draw results
 }
 
 void
@@ -276,8 +294,8 @@ render (render_context_t *context)
 void
 get_font (SFT *sft)
 {
-    sft->xScale = 18;
-    sft->yScale = 18;
+    sft->xScale = FONT_SCALE;
+    sft->yScale = FONT_SCALE;
     sft->flags  = SFT_DOWNWARD_Y;
 
     // get font file dir
