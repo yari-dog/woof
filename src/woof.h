@@ -35,11 +35,6 @@ init_woof ()
     state->xkb              = xkb_init ();
 
     const char *xdg_backend = getenv ("XDG_BACKEND");
-    // get display server
-    // if (!(xdg_backend = getenv ("XDG_BACKEND")))
-    //     die ("cant find backend lmao");
-
-    // if (strcmp (xdg_backend, WAYLAND) == 0)
     if (getenv ("WAYLAND_DISPLAY") || strcmp (getenv ("XDG_SESSION_TYPE"), "wayland"))
         {
             state->wlc        = wlc_init ();
