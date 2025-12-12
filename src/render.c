@@ -34,8 +34,6 @@
 #define B 3
 #endif
 
-void draw_borders (buffer_t *context);
-
 static void
 blend (const buffer_t *context, const buffer_t *input_buf)
 {
@@ -46,9 +44,11 @@ blend (const buffer_t *context, const buffer_t *input_buf)
     for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
         for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
             {
+                // if fg is transparent just skip
                 if (!(*fg)[A])
                     continue;
 
+                // if bg is transparent or fg is 100%
                 if (!(*bg)[A] || 0xFF == (*fg)[A])
                     {
                         memcpy (bg, fg, sizeof (uint32_t));
@@ -131,6 +131,19 @@ draw_color_square (buffer_t *context, uint32_t color, uint32_t width, uint32_t h
 }
 
 static void
+draw_borders (buffer_t *context)
+{
+    if (!BORDER_WIDTH)
+        return;
+
+    draw_color_square (context, BORDER_COLOR, context->width, BORDER_WIDTH, 0, 0);  // top
+    draw_color_square (context, BORDER_COLOR, BORDER_WIDTH, context->height, 0, 0); // left
+    draw_color_square (context, BORDER_COLOR, context->width, BORDER_WIDTH, 0,
+                       context->height - BORDER_WIDTH); // bottom
+    draw_color_square (context, BORDER_COLOR, BORDER_WIDTH, context->height, context->width - BORDER_WIDTH, 0); // right
+}
+
+static void
 draw_cur (buffer_t *context, int x, int y)
 {
     draw_color_square (context, COLOR_FG, 2, 1 * FONT_SCALE, x, y);
@@ -179,7 +192,7 @@ draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int
     char *string_buf      = calloc (1, width * height);
     char *string_buf_temp = string_buf;
 
-    for (int i = 0; i < strlen (str); i++)
+    for (int i = 0; i < strlen (str) && t_x <= width; i++)
         {
             draw_character (context->render_context->sft, string_buf, str[i], height, width, &t_x);
             if (i == (int)cur - 1)
@@ -187,10 +200,9 @@ draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int
         }
 
     // convert the char* from sft to uint32_t*
-    // // -10 12
     buffer_t render_buf       = INIT_BUF (context, width, height, x, y, render_buf);
     uint32_t *render_buf_temp = render_buf.buffer;
-    // TODO: overrun
+    // TODO: overrun.
     for (int i = 0; i < width * height; ++i)
         *render_buf_temp++ = *string_buf_temp++ << 24 | (COLOR_FG & 0xFFFFFF); // last bit is take out the alpha
 
@@ -209,7 +221,8 @@ draw_command_str (buffer_t *context)
     int cur   = g_woof->state->cursor;
 
     int x     = PADDING / 2;
-    int y     = (context->height / 2) - (3 * FONT_SCALE / 4);
+    // center vertical padding
+    int y = (context->height / 2) - (3 * FONT_SCALE / 4);
     draw_str (context, str, context->height, context->width, x, y, cur);
 }
 
@@ -248,19 +261,6 @@ draw_results (buffer_t *context)
 
     draw_to_buffer (context, &temp_buf, false);
     free (temp_buf.buffer);
-}
-
-void
-draw_borders (buffer_t *context)
-{
-    if (!BORDER_WIDTH)
-        return;
-
-    draw_color_square (context, BORDER_COLOR, context->width, BORDER_WIDTH, 0, 0);  // top
-    draw_color_square (context, BORDER_COLOR, BORDER_WIDTH, context->height, 0, 0); // left
-    draw_color_square (context, BORDER_COLOR, context->width, BORDER_WIDTH, 0,
-                       context->height - BORDER_WIDTH); // bottom
-    draw_color_square (context, BORDER_COLOR, BORDER_WIDTH, context->height, context->width - BORDER_WIDTH, 0); // right
 }
 
 void
