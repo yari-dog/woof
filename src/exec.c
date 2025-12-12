@@ -25,6 +25,7 @@ exec_cmd (char *cmd)
 
 void
 sort_results (state_t *state)
+// make a linked list of all matching results from array of all ?
 {
 }
 
@@ -33,8 +34,6 @@ sort_results (state_t *state)
 void
 get_results (state_t *state)
 {
-    state->results = calloc (5, sizeof (result_t));
-
     // attain list of locations to look for .desktop files
     char *xdg_data_dirs;
     if ((xdg_data_dirs = getenv ("XDG_DATA_DIRS")) == NULL)
@@ -46,15 +45,16 @@ get_results (state_t *state)
     DIR *d;
     struct dirent *dir;
 
-    // search those dirs for .desktop files
+    state->results     = calloc (128, sizeof (result_t *));
+    result_t **results = state->results;
 
+    // search those dirs for .desktop files
     while (xdg_data_dirs != NULL)
         {
             if (dirdelim != NULL)
                 *dirdelim++ = '\0';
 
             sprintf (dirstr, "%s/applications", xdg_data_dirs);
-            INFO ("data dir in: %s", dirstr);
 
             // if <x>/applications dir exists
             if (!access (dirstr, R_OK) && (d = opendir (dirstr)) != NULL)
@@ -66,7 +66,16 @@ get_results (state_t *state)
                             if (strstr (dir->d_name, ".desktop") == NULL)
                                 continue;
 
-                            INFO ("file: %s", dir->d_name);
+                            state->result_count++;
+
+                            // create result and append pointer to state->results
+                            *results            = calloc (1, sizeof (result_t));
+                            (*results)->visible = true;
+
+                            (*results)->path    = calloc (1, strlen (dirstr) + strlen (dir->d_name) + 2);
+                            sprintf ((*results)->path, "%s/%s", dirstr, dir->d_name);
+
+                            results++;
                         }
                     closedir (d);
                 }
@@ -76,6 +85,10 @@ get_results (state_t *state)
             if (dirdelim != NULL && (dirdelim = strstr (xdg_data_dirs, ":")) == NULL)
                 dirdelim = NULL;
         }
+
+    result_t **t_results = state->results;
+    for (int i = 0; i < state->result_count; i++, t_results++)
+        INFO ("found: %s", (*t_results)->path);
 
     sort_results (state);
 }

@@ -10,6 +10,7 @@
 typedef struct result_t
 {
     char *title;
+    char *path;
     char *description;
     char *exec_cmd;
     bool visible;
@@ -27,7 +28,7 @@ typedef struct state_t
     // various window server agnostic bits
     struct render_context_t *render_context;
 
-    struct result_t *results;
+    struct result_t **results;
     uint16_t result_count;
 
     char *title;
