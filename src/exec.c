@@ -41,17 +41,19 @@ move_hover (state_t *state, int8_t change)
 {
     result_t *result = state->hovered_result;
     result->hovered  = false;
-    result_t *step;
+    result_t *(*step) (result_t *);
 
     if (change < 0)
-        step = prev_result (result);
+        step = prev_result;
     else
-        step = next_result (result);
+        step = next_result;
 
     while (change)
         {
-            if ((result = step) == NULL)
-                die ("result linked list brokey");
+            if (!step (result))
+                break;
+
+            result  = step (result);
 
             change -= (((unsigned)change >> 7) | (!!change)); // this adds 1 for a negative change and vice versa
         }
