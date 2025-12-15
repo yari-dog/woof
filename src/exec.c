@@ -171,7 +171,7 @@ get_results (state_t *state)
                                     else if (strcmp (key, "Path") == 0)
                                         ptr = &(*results)->path;
                                     else if (strcmp (key, "Terminal") == 0)
-                                        (*results)->terminal = strcmp (val_ptr, "true") ? true : false;
+                                        (*results)->terminal = strcmp (val_ptr, "True") ? true : false;
 
                                     if (ptr == NULL)
                                         free (val);
@@ -206,7 +206,14 @@ exec_desktop (state_t *state)
 {
     result_t *result = state->hovered_result;
     char *exec       = result->exec_cmd;
-    exec_cmd (exec);
+    if (result->terminal)
+        {
+            char *t = getenv ("TERM");
+            exec    = calloc (1, strlen (result->exec_cmd) + strlen (t) + 2);
+            sprintf (exec, "%s %s", t, result->exec_cmd);
+        }
+    OUT_MESSAGE ("executing: %s (%s)", result->entry_path, exec);
+    exec_cmd (exec); // TODO: refactor incase this "leak" when using term becomes an issue
 }
 
 void
