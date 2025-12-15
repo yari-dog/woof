@@ -219,8 +219,8 @@ exec_desktop (state_t *state)
 void
 run (state_t *state)
 {
-    if (strstr (state->current_command_string, ":run ") == state->current_command_string)
-        exec_cmd (&state->current_command_string[5]); // remove ":run "
+    if (strstr (state->current_command_string, ":run") == state->current_command_string)
+        exec_cmd (&state->current_command_string[5]); // remove ":run " // TODO: make this actually spawn a term
     else
         exec_desktop (state);
 }
