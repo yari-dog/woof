@@ -1,6 +1,7 @@
 #include "exec.h"
 #include "state.h"
 #include "util.h"
+#include "woof.h"
 #include <dirent.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -23,10 +24,68 @@ exec_cmd (char *cmd)
     return 0;
 }
 
+static result_t *
+prev_result (result_t *result)
+{
+    return result->prev;
+}
+
+static result_t *
+next_result (result_t *result)
+{
+    return result->next;
+}
+
+void
+move_hover (state_t *state, int8_t change)
+{
+    result_t *result = state->hovered_result;
+    result->hovered  = false;
+    result_t *step;
+
+    if (change < 0)
+        step = prev_result (result);
+    else
+        step = next_result (result);
+
+    while (change)
+        {
+            if ((result = step) == NULL)
+                die ("result linked list brokey");
+
+            change -= (((unsigned)change >> 7) | (!!change)); // this adds 1 for a negative change and vice versa
+        }
+
+    state->hovered_result = result;
+    result->hovered       = true;
+}
+
 static void
 sort_results (state_t *state)
 // make a linked list of all matching results from array of all ?
 {
+    result_t **results = state->results;
+    result_t *result   = (*results);
+    result_t *l_result = NULL;
+
+    // init just do this for time being
+    result->hovered       = true;
+    state->hovered_result = result;
+    state->head_result    = result;
+
+    // replace with actual sorting when i figure ts out
+    for (int i = 0; i < state->result_count; i++, results++)
+        {
+            result          = (*results);
+            result->visible = true;
+            result->pos     = i;
+            if (l_result)
+                {
+                    result->prev   = l_result;
+                    l_result->next = result;
+                }
+            l_result = result;
+        }
 }
 
 // how the fuck do i do this lmao
@@ -45,7 +104,7 @@ get_results (state_t *state)
     DIR *d;
     struct dirent *dir;
 
-    state->results     = calloc (128, sizeof (result_t *));
+    state->results     = calloc (256, sizeof (result_t *));
     result_t **results = state->results;
 
     // search those dirs for .desktop files
@@ -69,11 +128,55 @@ get_results (state_t *state)
                             state->result_count++;
 
                             // create result and append pointer to state->results
-                            *results            = calloc (1, sizeof (result_t));
-                            (*results)->visible = true;
+                            *results               = calloc (1, sizeof (result_t));
 
-                            (*results)->path    = calloc (1, strlen (dirstr) + strlen (dir->d_name) + 2);
-                            sprintf ((*results)->path, "%s/%s", dirstr, dir->d_name);
+                            (*results)->entry_path = calloc (1, strlen (dirstr) + strlen (dir->d_name) + 2);
+                            sprintf ((*results)->entry_path, "%s/%s", dirstr, dir->d_name);
+
+                            FILE *f;
+                            char *key;
+                            size_t length = 0;
+                            ssize_t read;
+
+                            // read the desktop files
+                            if ((f = fopen ((*results)->entry_path, "r")) == NULL)
+                                die ("%s not opening :(", (*results)->entry_path);
+
+                            while ((read = getline (&key, &length, f)) != -1)
+                                {
+                                    char *val_ptr = strstr (key, "=");
+
+                                    if (val_ptr == NULL)
+                                        continue;
+
+                                    *val_ptr++                = '\0';
+
+                                    *(strstr (val_ptr, "\n")) = '\0'; // getline keeps newline
+                                                                      // there might be a scenario where the line might
+                                                                      // not have a new line but idgaf
+
+                                    char *val  = calloc (1, strlen (val_ptr) + 1);
+                                    char **ptr = NULL;
+
+                                    sprintf (val, "%s", val_ptr);
+                                    if (strcmp (key, "Name") == 0)
+                                        ptr = &(*results)->title;
+                                    else if (strcmp (key, "Exec") == 0)
+                                        ptr = &(*results)->exec_cmd;
+                                    else if (strcmp (key, "Comment") == 0)
+                                        ptr = &(*results)->comment;
+                                    else if (strcmp (key, "Path") == 0)
+                                        ptr = &(*results)->path;
+                                    else if (strcmp (key, "Terminal") == 0)
+                                        (*results)->terminal = strcmp (val_ptr, "true") ? true : false;
+
+                                    if (ptr == NULL)
+                                        free (val);
+                                    else
+                                        *ptr = val;
+                                }
+
+                            fclose (f);
 
                             results++;
                         }
@@ -86,15 +189,28 @@ get_results (state_t *state)
                 dirdelim = NULL;
         }
 
-    result_t **t_results = state->results;
-    for (int i = 0; i < state->result_count; i++, t_results++)
-        INFO ("found: %s", (*t_results)->path);
+    // result_t **t_results = state->results;
+    // for (int i = 0; i < state->result_count; i++, t_results++)
+    //     INFO ("found: %s", (*t_results)->title);
 
     sort_results (state);
+    move_hover (state, 0); // select first in list (they are all visible at start, so first is chilling)
+}
+
+// todo: running yazi does not work
+static void
+exec_desktop (state_t *state)
+{
+    result_t *result = state->hovered_result;
+    char *exec       = result->exec_cmd;
+    exec_cmd (exec);
 }
 
 void
 run (state_t *state)
 {
-    exec_cmd (&state->current_command_string[5]); // remove ":run "
+    if (strstr (state->current_command_string, ":run ") == state->current_command_string)
+        exec_cmd (&state->current_command_string[5]); // remove ":run "
+    else
+        exec_desktop (state);
 }

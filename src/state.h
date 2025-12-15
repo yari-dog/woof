@@ -11,9 +11,15 @@ typedef struct result_t
 {
     char *title;
     char *path;
-    char *description;
+    char *entry_path; // this is the path of the .desktop file
+    char *comment;
     char *exec_cmd;
+    bool terminal;
     bool visible;
+    bool hovered;
+    struct result_t *next;
+    struct result_t *prev;
+    uint8_t pos;
 } result_t;
 
 typedef struct state_t
@@ -29,6 +35,8 @@ typedef struct state_t
     struct render_context_t *render_context;
 
     struct result_t **results;
+    struct result_t *head_result;
+    struct result_t *hovered_result;
     uint16_t result_count;
 
     char *title;

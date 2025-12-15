@@ -6,4 +6,6 @@
 void run (state_t *state);
 
 void get_results (state_t *state);
+
+void move_hover (state_t *state, int8_t count);
 #endif

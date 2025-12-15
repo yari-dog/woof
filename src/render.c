@@ -85,7 +85,6 @@ trim_buf (buffer_t *context, buffer_t *input_buf)
     if (trim_width >= input_buf->width && trim_height >= input_buf->height)
         return;
 
-    INFO ("trimming");
     uint32_t trim_stride = context->render_context->color_depth * trim_width;
 
     uint32_t *temp_buf   = calloc (1, trim_height * trim_stride);
@@ -186,7 +185,7 @@ draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t height, uint
 }
 
 static void
-draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int cur)
+draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int cur, uint32_t color)
 {
     int32_t cur_x, cur_y;
     int32_t t_x           = 0;
@@ -207,7 +206,7 @@ draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int
     uint32_t *render_buf_temp = render_buf.buffer;
     // TODO: overrun.
     for (int i = 0; i < width * height; ++i)
-        *render_buf_temp++ = *string_buf_temp++ << 24 | (COLOR_FG & 0xFFFFFF); // last bit is take out the alpha
+        *render_buf_temp++ = *string_buf_temp++ << 24 | (color & 0xFFFFFF); // last bit is take out the alpha
 
     if (cur)
         draw_cur (&render_buf, t_x, t_y + (FONT_SCALE / 4));
@@ -226,7 +225,7 @@ draw_command_str (buffer_t *context)
     int x     = PADDING / 2;
     // center vertical padding
     int y = (context->height / 2) - (3 * FONT_SCALE / 4);
-    draw_str (context, str, context->height, context->width, x, y, cur);
+    draw_str (context, str, context->height, context->width, x, y, cur, COLOR_FG);
 }
 
 static void
@@ -250,15 +249,24 @@ draw_results (buffer_t *context)
 
     draw_borders (&temp_buf);
 
-    int x, y;
+    int x, y, fit, page;
 
-    x                  = PADDING;
-    y                  = PADDING;
+    x   = PADDING;
+    y   = PADDING;
+    fit = temp_buf.height / (COMMAND_HEIGHT + PADDING); // for pagination
 
-    result_t **results = g_woof->state->results;
-    for (int i = 0; i < g_woof->state->result_count && y < temp_buf.height - PADDING; i++, results++)
+    // build the <fit> number of results and paginate based on the position of the highlighted entry
+    result_t *result = g_woof->state->hovered_result;
+    for (int i = 0; result->prev != NULL && (result->pos) % fit; i++, result = result->prev)
+        ;
+
+    for (; result->next != NULL && y < temp_buf.height - PADDING;
+         result = result->next) // this prolly skips the last result
         {
-            draw_str (&temp_buf, (*results)->path, COMMAND_HEIGHT, WIDTH, PADDING, y, 0);
+            if (result->hovered)
+                draw_color_square (&temp_buf, COLOR_FG, WIDTH, COMMAND_HEIGHT + PADDING, 0, y - (PADDING / 2));
+            draw_str (&temp_buf, result->title, COMMAND_HEIGHT, WIDTH, PADDING,
+                      y + (COMMAND_HEIGHT / 2) - (3 * FONT_SCALE / 4), 0, result->hovered ? COLOR_BG : COLOR_FG);
             y += COMMAND_HEIGHT + PADDING;
         }
 

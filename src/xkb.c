@@ -146,6 +146,12 @@ xkb_handle_key (state_t *state, uint32_t keycode)
         case XKB_KEY_Right:
             move_cursor (state, 1);
             break;
+        case XKB_KEY_Up:
+            move_hover (state, -1);
+            break;
+        case XKB_KEY_Down:
+            move_hover (state, 1);
+            break;
         default:
             if (xkb_keysym_to_utf8 (sym, buf, 8))
                 if (!xkb_handle_quick_double_key (state, current_time, buf))
