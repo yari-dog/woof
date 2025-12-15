@@ -19,7 +19,8 @@ exec_cmd (char *cmd)
             die ("fork:");
         case 0:
             execv (argv[0], argv);
-            die ("bye bye :3");
+            INFO ("bye bye :3");
+            g_woof->state->close = true;
         }
     return 0;
 }

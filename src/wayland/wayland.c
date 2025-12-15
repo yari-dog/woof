@@ -197,7 +197,7 @@ void
 wlc_disconnect (state_t *state)
 {
     wlc_t *wlc = state->wlc;
-    INFO ("closing :O");
+    INFO ("wlc_disconnect closing :O");
     wl_display_disconnect (wlc->display);
 }
 
