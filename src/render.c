@@ -85,6 +85,8 @@ draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
             uint8_t (*fg)[4] = (void *)input_buf->buffer;
 
             uint8_t inv_alpha;
+
+            // for each row of input buf, blend each pixel
             for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
                 for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
                     {
@@ -145,7 +147,8 @@ draw_borders (buffer_t *context)
 static void
 draw_cur (buffer_t *context, int x, int y)
 {
-    draw_color_square (context, COLOR_FG, 2, 1 * FONT_SCALE, x, y);
+    if (g_woof->state->cur_visible)
+        draw_color_square (context, COLOR_FG, 2, 1 * FONT_SCALE, x, y);
     // could simply invert the buffer colors with some sorta bit masking ?
 }
 

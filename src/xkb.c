@@ -161,7 +161,10 @@ xkb_handle_key (state_t *state, uint32_t keycode)
                     }
         }
 
-    state->update = true;
+    state->update            = true;
+    state->typing            = true;
+    state->cur_visible       = true;
+    state->time_since_typing = current_time;
 
     IN_MESSAGE ("(sym %d) (kc %u)", sym, keycode);
     INFO ("current command: %s, %lu, %zu", state->current_command_string, strlen (state->current_command_string),
