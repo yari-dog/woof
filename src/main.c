@@ -19,16 +19,18 @@ main ()
             if (current_time - g_woof->state->run_time > 20) // you don't need more than 50fps on a menu
                 {
                     if (g_woof->state->typing && current_time - g_woof->state->time_since_typing > 200)
-                        g_woof->state->typing = false;
-                    if (current_time - g_woof->state->cur_time > 1000 && !g_woof->state->typing)
+                        {
+                            g_woof->state->typing   = false;
+                            g_woof->state->cur_time = current_time;
+                        }
+                    if (current_time - g_woof->state->cur_time > 500 && !g_woof->state->typing)
                         {
                             g_woof->state->cur_visible = !g_woof->state->cur_visible;
                             g_woof->state->update      = true;
+                            g_woof->state->cur_time    = current_time;
                         }
                     g_woof->main_loop (g_woof->state);
                     g_woof->state->run_time = current_time;
-                    if (current_time - g_woof->state->cur_time > 1000)
-                        g_woof->state->cur_time = current_time;
                 }
         }
 
