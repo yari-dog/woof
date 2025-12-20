@@ -35,38 +35,6 @@
 #endif
 
 static void
-blend (const buffer_t *context, const buffer_t *input_buf)
-{
-    uint8_t (*bg)[4] = (void *)(context->buffer + (context->width * input_buf->y) + input_buf->x);
-    uint8_t (*fg)[4] = (void *)input_buf->buffer;
-
-    uint8_t inv_alpha;
-    for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
-        for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
-            {
-                // if fg is transparent just skip
-                if (!(*fg)[A])
-                    continue;
-
-                // if bg is transparent or fg is 100%
-                if (!(*bg)[A] || 0xFF == (*fg)[A])
-                    {
-                        memcpy (bg, fg, sizeof (uint32_t));
-                        continue;
-                    }
-
-                // TODO: parelellize? https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
-                // https://www.daniweb.com/programming/software-development/code/216791/alpha-blend-algorithm
-                inv_alpha = 255 - (*fg)[A];
-
-                (*bg)[A]  = (*fg)[A] + ((*bg)[A] * inv_alpha >> 8);            // a
-                (*bg)[R]  = ((*fg)[A] * (*fg)[R] + inv_alpha * (*bg)[R]) >> 8; // r
-                (*bg)[G]  = ((*fg)[A] * (*fg)[G] + inv_alpha * (*bg)[G]) >> 8; // g
-                (*bg)[B]  = ((*fg)[A] * (*fg)[B] + inv_alpha * (*bg)[B]) >> 8; // b
-            }
-}
-
-static void
 trim_buf (buffer_t *context, buffer_t *input_buf)
 {
 
@@ -112,7 +80,36 @@ draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
 
     // call with should_blend=true if transparency is likely
     if (should_blend)
-        blend (context, input_buf);
+        {
+            uint8_t (*bg)[4] = (void *)(context->buffer + (context->width * input_buf->y) + input_buf->x);
+            uint8_t (*fg)[4] = (void *)input_buf->buffer;
+
+            uint8_t inv_alpha;
+            for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
+                for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
+                    {
+                        // if fg is transparent just skip
+                        if (!(*fg)[A])
+                            continue;
+
+                        // if bg is transparent or fg is 100%
+                        if (!(*bg)[A] || 0xFF == (*fg)[A])
+                            {
+                                memcpy (bg, fg, sizeof (uint32_t));
+                                continue;
+                            }
+
+                        // TODO: parelellize?
+                        // https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+                        // https://www.daniweb.com/programming/software-development/code/216791/alpha-blend-algorithm
+                        inv_alpha = 255 - (*fg)[A];
+
+                        (*bg)[A]  = (*fg)[A] + ((*bg)[A] * inv_alpha >> 8);            // a
+                        (*bg)[R]  = ((*fg)[A] * (*fg)[R] + inv_alpha * (*bg)[R]) >> 8; // r
+                        (*bg)[G]  = ((*fg)[A] * (*fg)[G] + inv_alpha * (*bg)[G]) >> 8; // g
+                        (*bg)[B]  = ((*fg)[A] * (*fg)[B] + inv_alpha * (*bg)[B]) >> 8; // b
+                    }
+        }
     else
         for (int i = 0; i < input_buf->height; ++i)
             memcpy (&context->buffer[(context->width * (i + input_buf->y)) + input_buf->x],
