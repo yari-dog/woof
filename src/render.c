@@ -85,11 +85,14 @@ draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
             uint8_t (*fg)[4] = (void *)input_buf->buffer;
 
             uint8_t inv_alpha;
+            uint16_t blank_width = context->width - input_buf->width;
 
             // for each row of input buf, blend each pixel
-            for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
+            for (int i = 0; i < input_buf->height; ++i, bg += blank_width)
                 for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
                     {
+                        // NOTE: is it faster to branch or just do the pointless math regardless?
+
                         // if fg is transparent just skip
                         if (!(*fg)[A])
                             continue;

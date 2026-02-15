@@ -13,8 +13,8 @@ pkgs.mkShell {
     fontconfig
   ];
   shellHook = ''
-    #     zsh
-      [ -x ~/.zshrc ] && source ~/.zshrc
+    #     bash
+      [ -x ~/.bashrc ] && source ~/.bashrc
       export WAYLAND_PROTOCOL_LOC=${pkgs.wayland-protocols}
       export WLR_PROTOCOL_LOC=${pkgs.wlr-protocols}'';
 }
