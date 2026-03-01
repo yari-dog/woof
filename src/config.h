@@ -13,7 +13,7 @@
 #define HEIGHT         400
 #define MARGIN         0
 #define COMMAND_HEIGHT 32 // 32
-#define PADDING        15
+#define PADDING        16
 #define BORDER_WIDTH   2
 
 #define INITIAL_COMMAND ":"

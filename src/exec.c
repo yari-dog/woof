@@ -211,7 +211,7 @@ exec_desktop (state_t *state)
             char *t = getenv ("TERM");
             exec    = calloc (1, strlen (result->exec_cmd) + strlen (t) + 2);
             sprintf (exec, "%s %s", t, result->exec_cmd);
-            OUT_MESSAGE("running ter");
+            OUT_MESSAGE ("running ter");
         }
     OUT_MESSAGE ("executing: %s (%s)", result->entry_path, exec);
     exec_cmd (exec); // TODO: refactor incase this "leak" when using term becomes an issue

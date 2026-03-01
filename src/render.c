@@ -37,7 +37,6 @@
 static void
 trim_buf (buffer_t *context, buffer_t *input_buf)
 {
-
     // TODO: make this work with negative x and y
     int32_t trim_width  = MIN ((int)context->width - (int)input_buf->x, (int)input_buf->width);
     int32_t trim_height = MIN ((int)context->height - (int)input_buf->y, (int)input_buf->height);
@@ -180,7 +179,7 @@ draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t height, uint
     *x        += mtx.leftSideBearing;
 
     char *buf  = &string_buf[(FONT_SCALE + mtx.yOffset) * width];
-    // this placement does not account for overflowing the visual bounds of the input buffer
+    // TODO: this placement does not account for overflowing the visual bounds of the input buffer
     for (int i = 0; i < img.height; ++i)
         memcpy (&buf[(i * width) + *x], &pixels[i * img.width], img.width);
 
@@ -259,6 +258,8 @@ draw_results (buffer_t *context)
     fit = temp_buf.height / (COMMAND_HEIGHT + PADDING); // for pagination
 
     // build the <fit> number of results and paginate based on the position of the highlighted entry
+    // start at what position in the list the highlighted result is, modulus by fit to find where on the page it is,
+    // then go back until you reach 0. thats the first item on the page
     result_t *result = g_woof->state->hovered_result;
     for (int i = 0; result->prev != NULL && (result->pos) % fit; i++, result = result->prev)
         ;
@@ -267,9 +268,14 @@ draw_results (buffer_t *context)
          result = result->next) // this prolly skips the last result
         {
             if (result->hovered)
-                draw_color_square (&temp_buf, COLOR_FG, WIDTH, COMMAND_HEIGHT + PADDING, 0, y - (PADDING / 2));
+                draw_color_square (&temp_buf, COLOR_FG, WIDTH, COMMAND_HEIGHT + PADDING, 0, y - PADDING);
+
+            // TODO: make draw_str figure out the placing based on the container instead of all this math bullshit for
+            // every different place draw_str gets called
             draw_str (&temp_buf, result->title, COMMAND_HEIGHT, WIDTH, PADDING,
-                      y + (COMMAND_HEIGHT / 2) - (3 * FONT_SCALE / 4), 0, result->hovered ? COLOR_BG : COLOR_FG);
+                      y + (COMMAND_HEIGHT / 2) - (3 * FONT_SCALE / 4) - (PADDING / 2), 0,
+                      result->hovered ? COLOR_BG : COLOR_FG);
+
             y += COMMAND_HEIGHT + PADDING;
         }
 
