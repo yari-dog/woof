@@ -219,25 +219,19 @@ draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int
 }
 
 static void
-draw_command_str (buffer_t *context)
-{
-    char *str = g_woof->state->current_command_string;
-    int cur   = g_woof->state->cursor;
-
-    int x     = PADDING / 2;
-    // center vertical padding
-    int y = (context->height / 2) - (3 * FONT_SCALE / 4);
-    draw_str (context, str, context->height, context->width, x, y, cur, COLOR_FG);
-}
-
-static void
 draw_input (buffer_t *context)
 {
     buffer_t temp_buf = INIT_BUF (context, WIDTH, COMMAND_HEIGHT, 0, HEIGHT - COMMAND_HEIGHT, temp_buf);
     draw_color_square (&temp_buf, COMMAND_BG, temp_buf.width, temp_buf.height, 0, 0);
-    // TODO: command draw
 
-    draw_command_str (&temp_buf);
+    // draw the command string
+    {
+        char *str = g_woof->state->current_command_string;
+        int cur   = g_woof->state->cursor;
+        int x     = PADDING / 2;
+        int y     = (temp_buf.height / 2) - (3 * FONT_SCALE / 4);
+        draw_str (&temp_buf, str, temp_buf.height, temp_buf.width, x, y, cur, COLOR_FG);
+    }
 
     draw_to_buffer (context, &temp_buf, false);
     free (temp_buf.buffer);
