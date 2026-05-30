@@ -37,6 +37,9 @@
 static void
 blend (const buffer_t *context, const buffer_t *input_buf)
 {
+    // cast 32 bit int of given pixel into array of four 8 bit ints
+    // so that each channel can be modified directly in place in memory
+    // without needing to dick around with other vars
     uint8_t (*bg)[4] = (void *)(context->buffer + (context->width * input_buf->y) + input_buf->x);
     uint8_t (*fg)[4] = (void *)input_buf->buffer;
 
