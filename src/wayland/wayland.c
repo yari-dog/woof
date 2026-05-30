@@ -5,6 +5,7 @@
 #include "../state.h"
 #include "../util.h"
 #include "../woof.h"
+#include "wayland-client-core.h"
 #include "wayland-listeners.h"
 #include <errno.h>
 #include <fcntl.h>
@@ -207,9 +208,7 @@ wlc_main_loop (state_t *state)
 {
     if (state->update)
         wlc_set_surface (state->wlc);
-    wl_display_flush (state->wlc->display);
 
     if (!wl_display_dispatch_pending (state->wlc->display))
-        if (wl_display_dispatch (state->wlc->display) < 0)
-            die ("display dispatch failed :(");
+        wl_display_roundtrip (state->wlc->display);
 }

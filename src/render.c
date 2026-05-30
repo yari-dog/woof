@@ -35,44 +35,8 @@
 #endif
 
 static void
-blend (const buffer_t *context, const buffer_t *input_buf)
-{
-    // cast 32 bit int of given pixel into array of four 8 bit ints
-    // so that each channel can be modified directly in place in memory
-    // without needing to dick around with other vars
-    uint8_t (*bg)[4] = (void *)(context->buffer + (context->width * input_buf->y) + input_buf->x);
-    uint8_t (*fg)[4] = (void *)input_buf->buffer;
-
-    uint8_t inv_alpha;
-    for (int i = 0; i < input_buf->height; ++i, bg += (context->width - input_buf->width))
-        for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
-            {
-                // if fg is transparent just skip
-                if (!(*fg)[A])
-                    continue;
-
-                // if bg is transparent or fg is 100%
-                if (!(*bg)[A] || 0xFF == (*fg)[A])
-                    {
-                        memcpy (bg, fg, sizeof (uint32_t));
-                        continue;
-                    }
-
-                // TODO: parelellize? https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
-                // https://www.daniweb.com/programming/software-development/code/216791/alpha-blend-algorithm
-                inv_alpha = 255 - (*fg)[A];
-
-                (*bg)[A]  = (*fg)[A] + ((*bg)[A] * inv_alpha >> 8);            // a
-                (*bg)[R]  = ((*fg)[A] * (*fg)[R] + inv_alpha * (*bg)[R]) >> 8; // r
-                (*bg)[G]  = ((*fg)[A] * (*fg)[G] + inv_alpha * (*bg)[G]) >> 8; // g
-                (*bg)[B]  = ((*fg)[A] * (*fg)[B] + inv_alpha * (*bg)[B]) >> 8; // b
-            }
-}
-
-static void
 trim_buf (buffer_t *context, buffer_t *input_buf)
 {
-
     // TODO: make this work with negative x and y
     int32_t trim_width  = MIN ((int)context->width - (int)input_buf->x, (int)input_buf->width);
     int32_t trim_height = MIN ((int)context->height - (int)input_buf->y, (int)input_buf->height);
@@ -115,7 +79,41 @@ draw_to_buffer (buffer_t *context, buffer_t *input_buf, bool should_blend)
 
     // call with should_blend=true if transparency is likely
     if (should_blend)
-        blend (context, input_buf);
+        {
+            uint8_t (*bg)[4] = (void *)(context->buffer + (context->width * input_buf->y) + input_buf->x);
+            uint8_t (*fg)[4] = (void *)input_buf->buffer;
+
+            uint8_t inv_alpha;
+            uint16_t blank_width = context->width - input_buf->width;
+
+            // for each row of input buf, blend each pixel
+            for (int i = 0; i < input_buf->height; ++i, bg += blank_width)
+                for (int j = 0; j < input_buf->width; ++j, fg++, bg++)
+                    {
+                        // NOTE: is it faster to branch or just do the pointless math regardless?
+
+                        // if fg is transparent just skip
+                        if (!(*fg)[A])
+                            continue;
+
+                        // if bg is transparent or fg is 100%
+                        if (!(*bg)[A] || 0xFF == (*fg)[A])
+                            {
+                                memcpy (bg, fg, sizeof (uint32_t));
+                                continue;
+                            }
+
+                        // TODO: parelellize?
+                        // https://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
+                        // https://www.daniweb.com/programming/software-development/code/216791/alpha-blend-algorithm
+                        inv_alpha = 255 - (*fg)[A];
+
+                        (*bg)[A]  = (*fg)[A] + ((*bg)[A] * inv_alpha >> 8);            // a
+                        (*bg)[R]  = ((*fg)[A] * (*fg)[R] + inv_alpha * (*bg)[R]) >> 8; // r
+                        (*bg)[G]  = ((*fg)[A] * (*fg)[G] + inv_alpha * (*bg)[G]) >> 8; // g
+                        (*bg)[B]  = ((*fg)[A] * (*fg)[B] + inv_alpha * (*bg)[B]) >> 8; // b
+                    }
+        }
     else
         for (int i = 0; i < input_buf->height; ++i)
             memcpy (&context->buffer[(context->width * (i + input_buf->y)) + input_buf->x],
@@ -151,7 +149,8 @@ draw_borders (buffer_t *context)
 static void
 draw_cur (buffer_t *context, int x, int y)
 {
-    draw_color_square (context, COLOR_FG, 2, 1 * FONT_SCALE, x, y);
+    if (g_woof->state->cur_visible)
+        draw_color_square (context, COLOR_FG, 2, 1 * FONT_SCALE, x, y);
     // could simply invert the buffer colors with some sorta bit masking ?
 }
 
@@ -180,7 +179,7 @@ draw_character (SFT *sft, char *string_buf, SFT_UChar chr, uint32_t height, uint
     *x        += mtx.leftSideBearing;
 
     char *buf  = &string_buf[(FONT_SCALE + mtx.yOffset) * width];
-    // this placement does not account for overflowing the visual bounds of the input buffer
+    // TODO: this placement does not account for overflowing the visual bounds of the input buffer
     for (int i = 0; i < img.height; ++i)
         memcpy (&buf[(i * width) + *x], &pixels[i * img.width], img.width);
 
@@ -220,25 +219,19 @@ draw_str (buffer_t *context, char *str, int height, int width, int x, int y, int
 }
 
 static void
-draw_command_str (buffer_t *context)
-{
-    char *str = g_woof->state->current_command_string;
-    int cur   = g_woof->state->cursor;
-
-    int x     = PADDING / 2;
-    // center vertical padding
-    int y = (context->height / 2) - (3 * FONT_SCALE / 4);
-    draw_str (context, str, context->height, context->width, x, y, cur, COLOR_FG);
-}
-
-static void
 draw_input (buffer_t *context)
 {
     buffer_t temp_buf = INIT_BUF (context, WIDTH, COMMAND_HEIGHT, 0, HEIGHT - COMMAND_HEIGHT, temp_buf);
     draw_color_square (&temp_buf, COMMAND_BG, temp_buf.width, temp_buf.height, 0, 0);
-    // TODO: command draw
 
-    draw_command_str (&temp_buf);
+    // draw the command string
+    {
+        char *str = g_woof->state->current_command_string;
+        int cur   = g_woof->state->cursor;
+        int x     = PADDING / 2;
+        int y     = (temp_buf.height / 2) - (3 * FONT_SCALE / 4);
+        draw_str (&temp_buf, str, temp_buf.height, temp_buf.width, x, y, cur, COLOR_FG);
+    }
 
     draw_to_buffer (context, &temp_buf, false);
     free (temp_buf.buffer);
@@ -259,6 +252,8 @@ draw_results (buffer_t *context)
     fit = temp_buf.height / (COMMAND_HEIGHT + PADDING); // for pagination
 
     // build the <fit> number of results and paginate based on the position of the highlighted entry
+    // start at what position in the list the highlighted result is, modulus by fit to find where on the page it is,
+    // then go back until you reach 0. thats the first item on the page
     result_t *result = g_woof->state->hovered_result;
     for (int i = 0; result->prev != NULL && (result->pos) % fit; i++, result = result->prev)
         ;
@@ -267,9 +262,14 @@ draw_results (buffer_t *context)
          result = result->next) // this prolly skips the last result
         {
             if (result->hovered)
-                draw_color_square (&temp_buf, COLOR_FG, WIDTH, COMMAND_HEIGHT + PADDING, 0, y - (PADDING / 2));
+                draw_color_square (&temp_buf, COLOR_FG, WIDTH, COMMAND_HEIGHT + PADDING, 0, y - PADDING);
+
+            // TODO: make draw_str figure out the placing based on the container instead of all this math bullshit for
+            // every different place draw_str gets called
             draw_str (&temp_buf, result->title, COMMAND_HEIGHT, WIDTH, PADDING,
-                      y + (COMMAND_HEIGHT / 2) - (3 * FONT_SCALE / 4), 0, result->hovered ? COLOR_BG : COLOR_FG);
+                      y + (COMMAND_HEIGHT / 2) - (3 * FONT_SCALE / 4) - (PADDING / 2), 0,
+                      result->hovered ? COLOR_BG : COLOR_FG);
+
             y += COMMAND_HEIGHT + PADDING;
         }
 

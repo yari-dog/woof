@@ -44,6 +44,11 @@ typedef struct state_t
     int32_t ccs_buffsize;
     bool close;
     bool update;
+    uint64_t run_time;
+    uint64_t cur_time;
+    uint64_t time_since_typing;
+    bool cur_visible;
+    bool typing;
 } state_t;
 
 state_t *init_state ();
